@@ -1,0 +1,194 @@
+syntax = "proto2";
+package google.protobuf;
+option java_package = "com";
+
+
+
+message SSTable{
+
+  required string fileName = 1;
+
+  required int32 size = 2;
+
+  required IntKey minKey=3;
+
+  required LongKey longMinKey=4;
+
+  required ByteKey BytesMinKey=5;
+
+  required IntKey maxKey=6;
+
+  required LongKey longMaxKey=7;
+
+  required ByteKey BytesMaxKey=8;
+
+
+
+}
+
+
+message FileList{
+
+  repeated SSTable level0 = 1;
+
+  repeated SSTable level1 = 2;
+
+  repeated SSTable level2 = 3;
+
+  repeated SSTable level3 = 4;
+
+  repeated SSTable level4 = 5;
+
+}
+
+
+
+
+message ColumnFamilyHandle{
+
+  required ColumnFamilyId id = 1;
+
+  required string name = 2;
+
+  required FileList fileList = 3;
+
+  repeated string WalFile=4;
+
+  required KeyType keyType=5;
+
+  required ValueType valueType=6;
+}
+
+
+message DB{
+  repeated ColumnFamilyHandle c = 1;
+
+   required int64 columnFamilyHandleId=2;
+}
+
+
+message log{
+  required KeyValue k = 1;
+}
+
+message KeyValue{
+  optional bytes key = 1;
+  optional int32 intKey = 2;
+  optional int64  longKey = 3;
+  optional bytes value = 4;
+  optional int32 intValue = 5;
+  optional int64 LongValue = 6;
+  optional PrepareId prepareId = 7;
+  required SequenceNumber seq = 8;
+  optional CommitId commitId = 9;
+
+  enum Type{
+    delete = 1;
+    update = 2;
+    insert = 3;
+  }
+
+  required Type type = 10;
+}
+
+message PrepareId{
+  required int64 time = 1;
+  required int32 id = 2;
+}
+
+message CommitId{
+  required int64 time = 1;
+  required int32 id = 2;
+}
+
+message SequenceNumber{
+  required int64 time = 1;
+  required int32 id = 2;
+}
+
+
+message IntKey{
+  required int32 key = 1;
+}
+
+message LongKey{
+  required int64 key = 1;
+}
+
+message ByteKey{
+  required bytes key = 1;
+}
+
+message Key{
+  optional IntKey intKey = 1;
+
+  optional LongKey longKey = 2;
+
+  optional ByteKey byteKey = 3;
+
+
+
+}
+
+enum KeyType{
+  intKey=1;
+  longKey=2;
+  bytesKey=3;
+
+}
+
+enum ValueType{
+  intValue=1;
+  longValue=2;
+  bytesValue=3;
+
+}
+
+
+message IntValue{
+  required int32 value = 1;
+}
+
+message LongValue{
+  required int64 value = 1;
+}
+
+message ByteValue{
+  required bytes value = 1;
+}
+
+message Value{
+  optional IntValue intValue = 1;
+
+  optional LongValue longValue = 2;
+
+  optional ByteValue byteValue = 3;
+
+}
+
+message TransactionKeyValue{
+  required ColumnFamilyId columnFamilyId = 1;
+
+  required KeyValue keyValue = 2;
+}
+
+message ColumnFamilyId {
+  required int64 id = 1;
+}
+
+
+message Offset{
+
+  optional bytes key = 1;
+  optional int32 intKey = 2;
+  optional int64  longKey = 3;
+
+  required int32 offset = 4;
+
+}
+
+message OffSetList{
+  repeated Offset list = 1 ;
+}
+
+

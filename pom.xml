@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>jRocksDB</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>net.openio.fastproto</groupId>
+                <artifactId>fastproto_maven_plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <configuration>
+                    <javaOutDir>src/test/java</javaOutDir>
+                    <SourcesDir>src/main/resources</SourcesDir>
+                    <protoFile>
+                        <file>DB/Db.proto</file>
+
+
+                    </protoFile>
+
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+            <version>4.1.80.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec</artifactId>
+            <version>4.1.80.Final</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+        </dependency>
+
+
+
+
+
+    </dependencies>
+
+</project>
