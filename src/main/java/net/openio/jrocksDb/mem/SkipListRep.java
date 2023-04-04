@@ -17,14 +17,14 @@ public class SkipListRep implements MemTableRep {
 
     private volatile Node[] head; // 头结点
 
-    private static final double P = 0.25; // 每一层加入节点的概率
+    private static final double P = 0.75; // 每一层加入节点的概率
 
     private boolean commitRead;
 
     private volatile CommitId maxCommitId;
 
 
-    static final AtomicInteger serializerSize = new AtomicInteger();
+     final AtomicInteger serializerSize = new AtomicInteger();
 
     static final AtomicReferenceFieldUpdater<SkipListRep, CommitId> updateCommit =
             AtomicReferenceFieldUpdater.newUpdater(SkipListRep.class, CommitId.class, "maxCommitId");
@@ -36,25 +36,31 @@ public class SkipListRep implements MemTableRep {
 
     // 生成随机层数
     private int randomLevel() {
+
         int level = 1;
-        while (ThreadLocalRandom.current().nextDouble() < P && level < MAX_LEVEL) {
-            level++;
+        for(int i=0;i<MAX_LEVEL;i++) {
+            if (ThreadLocalRandom.current().nextBoolean()) {
+                level++;
+            }
         }
         return level;
     }
 
     @Override
     public void addKeyValue(KeyValueEntry keyValue) {
-        if (keyValue == null || keyValue.key == null) {
-            throw new RuntimeException("keyValue is null or ke is null ");
-        }
+
         while (true) {
+
             CommitId commitId=this.maxCommitId;
             if (keyValue.commitId.compareTo(maxCommitId) > 0) {
                 if(updateCommit.compareAndSet(this,commitId,keyValue.commitId))
                     break;
+            }else {
+                break;
             }
+
         }
+
         int size=keyValue.getSize();
         serializerSize.getAndAdd(size);
         Node[] newNode = null;
@@ -63,10 +69,13 @@ public class SkipListRep implements MemTableRep {
 
         to:
         for (; ; ) {
+
             Node[] le = head;
             map.clear();
             add(map, head);
+
             for (int i = MAX_LEVEL - 1; i >= 0; ) {
+
                 if (le[i].next == null) {
                     i--;
                     continue;
@@ -82,30 +91,45 @@ public class SkipListRep implements MemTableRep {
                 }
                 add(map, le);
                 le = le[i].next;
+
+
             }
+
             add(map, le);
+
             if (newNode == null) {
                 newNode = newNodeArray(randomLevel(), keyValue);
             }
+
             Node[] nodes = newNode;
             int l = nodes.length;
+
             for (int a = addNodeLevel; a < l; a++, addNodeLevel++) {
+
                 Node[] node = map.get(a);
                 Node[] fnext;
                 fnext = nodes[a].next = node[a].next;
+
                 if (fnext != null && ((NodeImp) nodes[0]).key.compareTo(((NodeImp) fnext[0]).key) >= 0) {
+
                     newNode = null;
                     l = 0;
                     continue to;
                 }
+
                 if (!updater.compareAndSet(node[a], fnext, nodes)) {
+
                     continue to;
                 }
             }
+
             if (addNodeLevel == l) {
                 break;
             }
+
             keyNum.incrementAndGet();
+
+
         }
 
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 import net.openio.jrocksDb.strorage.SSTable;
 import net.openio.jrocksDb.tool.Serializer;
 
+import java.util.ArrayList;
 import java.util.List;
 @Getter
 public class FileList {
@@ -18,6 +19,17 @@ public class FileList {
     private List<SSTable> level3;
 
     private List<SSTable> level4;
+
+
+    public FileList(){
+
+        level0=new ArrayList<>();
+        level1=new ArrayList<>();
+        level2=new ArrayList<>();
+        level3=new ArrayList<>();
+        level4=new ArrayList<>();
+
+    }
 
 
 

@@ -35,7 +35,7 @@ public class OptimisticTransactionDB implements JRocksDB {
 
     private List<ColumnFamilyHandle> columnFamilyHandles;
 
-    private LockManager lockManager;
+    LockManager lockManager;
 
     private List<Snapshot> snapshots;
 
@@ -64,7 +64,7 @@ public class OptimisticTransactionDB implements JRocksDB {
             return Status.CKeyTypeVerify();
         }
         Snapshot snapshot = new Snapshot();
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, null, snapshot.getNumber(), snapshot.getPrepareId(), null);
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
         KeyValueEntry keyValue = columnFamilyHandle.get(keyValueEntry);
         if (keyValue == null || keyValue.getType() == KeyValueEntry.Type.delete) {
             return Status.GetDeleteValue();
@@ -86,21 +86,32 @@ public class OptimisticTransactionDB implements JRocksDB {
         if (value != null && !columnFamilyHandle.verify(value)) {
             return Status.CValueTypeVerify();
         }
+
         Snapshot snapshot = new Snapshot();
+
         snapshotMap.put(snapshot.getNumber(), snapshot);
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+
         long transactionId = getNewTransactionId();
+
         tryLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
+
         add(snapshot);
         KeyValueEntry keyValue = columnFamilyHandle.get(keyValueEntry);
         if (keyValue != null && keyValue.getType() != KeyValueEntry.Type.delete) {
             snapshotMap.remove(snapshot.getNumber());
             return Status.hasValue();
         }
+
         commit(snapshot);
+
         keyValueEntry.setType(KeyValueEntry.Type.insert);
+
         columnFamilyHandle.put(keyValueEntry);
+
         unLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
+
         return Status.put();
     }
 
@@ -118,7 +129,7 @@ public class OptimisticTransactionDB implements JRocksDB {
         }
         Snapshot snapshot = new Snapshot();
         snapshotMap.put(snapshot.getNumber(), snapshot);
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
         long transactionId = getNewTransactionId();
         tryLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
         add(snapshot);
@@ -184,7 +195,8 @@ public class OptimisticTransactionDB implements JRocksDB {
         synchronized (this){
             MaxId=snapshot.getCommitId();
 
-            while (true) {
+            while (snapshots.size()>0) {
+
                 Snapshot snapshot1=snapshots.get(0);
                 if (snapshot1!=null&&snapshot1.getCommitId().isInit()) {
                     snapshots.remove(0);
@@ -203,6 +215,10 @@ public class OptimisticTransactionDB implements JRocksDB {
 
     @Override
     public Status<ColumnFamily> createColumnFamily(String name, Key.KeyType keyType, Value.ValueType valueType) {
+        if(columnFamilyHandleMap.get(name)!=null){
+            return Status.f();
+        }
+
         ColumnFamilyId columnFamilyId;
         synchronized (this){
             columnFamilyHandleId++;
@@ -242,12 +258,12 @@ public class OptimisticTransactionDB implements JRocksDB {
     }
 
     private boolean tryLock(long transactionId, SequenceNumber sequenceNumber, ColumnFamilyId columnFamilyId, Key key) {
-        return lockManager.TryLock(transactionId, columnFamilyId, key, false, false, sequenceNumber) != null;
+        return lockManager.TryLock(transactionId, columnFamilyId, key, false, false, sequenceNumber,true) != null;
 
     }
 
     private void unLock(long transactionId, SequenceNumber sequenceNumber, ColumnFamilyId columnFamilyId, Key key) {
-        lockManager.UnLock(transactionId, columnFamilyId, key, false, false);
+        lockManager.UnLock(transactionId, columnFamilyId, key, false, false,true);
 
     }
 
@@ -255,6 +271,98 @@ public class OptimisticTransactionDB implements JRocksDB {
     private long getNewTransactionId() {
         return maxTransactionId.incrementAndGet();
     }
+
+
+
+
+    private OptimisticTransactionDB(){
+        this.columnFamilyHandles=new ArrayList<>();
+    }
+
+    public static OptimisticTransactionDB createDB(){
+        OptimisticTransactionDB optimisticTransactionDB=null;
+
+        try {
+            int size=0;
+            ByteBuf buf= Unpooled.directBuffer(4);
+            buf.writerIndex(4);
+            File file=new File(Config.DBMetaDataPath);
+            RandomAccessFile randomAccessFile=new RandomAccessFile(file,"rw");
+            randomAccessFile.seek(0);
+            randomAccessFile.getChannel().read(buf.nioBuffer());
+            size=buf.readInt();
+            buf.release();
+            buf=Unpooled.directBuffer(size);
+            buf.writerIndex(size);
+            randomAccessFile.seek(4);
+            randomAccessFile.getChannel().read(buf.nioBuffer());
+            optimisticTransactionDB=OptimisticTransactionDB.decode(buf,size);
+            buf.release();
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        optimisticTransactionDB.compressionQueue=new ConcurrentLinkedQueue<>();
+        optimisticTransactionDB.WalQueue=new ConcurrentLinkedQueue<>();
+        optimisticTransactionDB.flushQueue=new ConcurrentLinkedQueue<>();
+        optimisticTransactionDB.lockManager=new PointLockManager();
+        optimisticTransactionDB.columnFamilyHandleMap= new ConcurrentHashMap<>();
+        optimisticTransactionDB.snapshots=new LinkedList<>();
+        optimisticTransactionDB.snapshotMap=new ConcurrentHashMap<>();
+        optimisticTransactionDB.maxTransactionId =new AtomicLong(1);
+        optimisticTransactionDB.minId=new PrepareId(Long.MAX_VALUE,0);
+        optimisticTransactionDB.MaxId=new CommitId(Long.MIN_VALUE,0);
+        List<ColumnFamilyHandle> columnFamilyHandles=new CopyOnWriteArrayList<>();
+        for(int i=optimisticTransactionDB.columnFamilyHandles.size()-1;i>=0;i--){
+            ColumnFamilyHandle c=optimisticTransactionDB.columnFamilyHandles.get(i);
+            ColumnFamilyHandle c1=new ColumnFamilyHandle(c.getColumnFamilyId(),optimisticTransactionDB,c.name, optimisticTransactionDB.compressionQueue,
+                    optimisticTransactionDB.WalQueue,
+                    optimisticTransactionDB.flushQueue, c.WalFiles, c.fileList, c.keyType, c.valueType);
+            columnFamilyHandles.add(c1);
+            optimisticTransactionDB.columnFamilyHandleMap.put(c1.name,c1);
+        }
+        optimisticTransactionDB.columnFamilyHandles=columnFamilyHandles;
+        Thread thread=new Thread(new WalLogWorker(optimisticTransactionDB.WalQueue));
+        thread.start();
+        thread=new Thread(new FlushWorker(optimisticTransactionDB.flushQueue));
+        thread.start();
+        return optimisticTransactionDB;
+    }
+
+
+    public void loadDB(){
+        int size=0;
+        ByteBuf buf= Unpooled.directBuffer((size=this.getByteSize())+4);
+        buf.writeInt(size);
+        this.encode(buf);
+        File file=new File(Config.DBMetaDataPath);
+        try {
+            RandomAccessFile randomAccessFile=new RandomAccessFile(file,"rw");
+            randomAccessFile.seek(0);
+            randomAccessFile.getChannel().write(buf.nioBuffer());
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public PrepareId getMinPrepareId() {
+        return minId;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     public final static int c_Num = 1;
@@ -292,7 +400,8 @@ public class OptimisticTransactionDB implements JRocksDB {
     public static OptimisticTransactionDB decode(ByteBuf buf, int length_1) {
         OptimisticTransactionDB value_1 = new OptimisticTransactionDB();
         int f_Index = buf.readerIndex();
-        while (buf.readerIndex() < f_Index + length_1) {
+        int end=f_Index + length_1;
+        while (buf.readerIndex() < end) {
             int num_1 = Serializer.decodeVarInt32(buf);
             switch (num_1) {
                 case c_Tag :
@@ -319,6 +428,7 @@ public class OptimisticTransactionDB implements JRocksDB {
         int DB_size = c_TagEncodeSize * columnFamilyHandles.size();// add tag length
         for (ColumnFamilyHandle value_1 : columnFamilyHandles) {
             int length_1 = 0;
+
             length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
             length_1 += value_1.getByteSize();
             DB_size += length_1;
@@ -327,77 +437,6 @@ public class OptimisticTransactionDB implements JRocksDB {
         DB_size += columnfamilyhandleid_TagEncodeSize;
         DB_size +=Serializer.computeVarInt64Size(columnFamilyHandleId);
         return DB_size;
-    }
-
-    private OptimisticTransactionDB(){
-
-    }
-
-    public static OptimisticTransactionDB createDB(){
-        OptimisticTransactionDB optimisticTransactionDB=null;
-
-        try {
-            int size=0;
-            ByteBuf buf= Unpooled.directBuffer(4);
-            buf.writerIndex(4);
-            File file=new File(Config.DBMetaDataPath);
-            RandomAccessFile randomAccessFile=new RandomAccessFile(file,"rw");
-            randomAccessFile.seek(0);
-            randomAccessFile.getChannel().read(buf.nioBuffer());
-            size=buf.readInt();
-            buf.release();
-            buf=Unpooled.directBuffer(size);
-            buf.writerIndex(size);
-            randomAccessFile.getChannel().read(buf.nioBuffer());
-            optimisticTransactionDB=OptimisticTransactionDB.decode(buf,size);
-            buf.release();
-            randomAccessFile.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        optimisticTransactionDB.compressionQueue=new ConcurrentLinkedQueue<>();
-        optimisticTransactionDB.WalQueue=new ConcurrentLinkedQueue<>();
-        optimisticTransactionDB.flushQueue=new ConcurrentLinkedQueue<>();
-        optimisticTransactionDB.lockManager=new PointLockManager();
-        optimisticTransactionDB.columnFamilyHandleMap= new ConcurrentHashMap<>();
-        optimisticTransactionDB.columnFamilyHandles=new CopyOnWriteArrayList<>();
-        optimisticTransactionDB.snapshots=new LinkedList<>();
-        optimisticTransactionDB.maxTransactionId =new AtomicLong(1);
-        optimisticTransactionDB.minId=new PrepareId(Long.MAX_VALUE,0);
-        optimisticTransactionDB.MaxId=new CommitId(Long.MIN_VALUE,0);
-        List<ColumnFamilyHandle> columnFamilyHandles=new CopyOnWriteArrayList<>();
-        for(int i=optimisticTransactionDB.columnFamilyHandles.size()-1;i>=0;i--){
-            ColumnFamilyHandle c=optimisticTransactionDB.columnFamilyHandles.get(i);
-            ColumnFamilyHandle c1=new ColumnFamilyHandle(c.getColumnFamilyId(),optimisticTransactionDB,c.name, optimisticTransactionDB.compressionQueue,
-                    optimisticTransactionDB.WalQueue,
-                    optimisticTransactionDB.flushQueue, c.WalFiles, c.fileList, c.keyType, c.valueType);
-            columnFamilyHandles.add(c1);
-            optimisticTransactionDB.columnFamilyHandleMap.put(c1.name,c1);
-        }
-        optimisticTransactionDB.columnFamilyHandles=columnFamilyHandles;
-        Thread thread=new Thread(new WalLogWorker(optimisticTransactionDB.WalQueue));
-        thread.start();
-        thread=new Thread(new FlushWorker(optimisticTransactionDB.flushQueue));
-        thread.start();
-        return optimisticTransactionDB;
-    }
-
-
-    private void loadDB(){
-        int size=0;
-        ByteBuf buf= Unpooled.directBuffer(size=this.getByteSize()+4);
-        buf.writeInt(size);
-        this.encode(buf);
-        File file=new File(Config.DBMetaDataPath);
-        try {
-            RandomAccessFile randomAccessFile=new RandomAccessFile(file,"rw");
-            randomAccessFile.seek(0);
-            randomAccessFile.getChannel().write(buf.nioBuffer());
-            randomAccessFile.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }

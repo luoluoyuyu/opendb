@@ -1,8 +1,15 @@
 package net.openio.jrocksDb.db;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import net.openio.jrocksDb.config.Config;
+import net.openio.jrocksDb.transaction.PrepareId;
 import net.openio.jrocksDb.transaction.Transaction;
 
 import javax.xml.crypto.dsig.keyinfo.KeyValue;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 public interface JRocksDB {
@@ -22,5 +29,11 @@ public interface JRocksDB {
     Status<List<ColumnFamily>> getAllColumnFamily();
 
     Status<Transaction> createTransaction();
+
+    void loadDB();
+
+    PrepareId getMinPrepareId();
+
+
 
 }

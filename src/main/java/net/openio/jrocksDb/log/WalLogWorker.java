@@ -12,20 +12,23 @@ public class WalLogWorker implements Runnable{
 
     final int workerSize=16;
 
-    final int sleepTime=1;
+    final int sleepTime=5;
 
     @Override
     public void run() {
-        if(queue.size()<workerSize){
-            try {
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        for(;;) {
+            if (queue.size() < workerSize) {
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        }
-        for(int i=0;i<queue.size();i++) {
-            WalTask walTask=queue.poll();
-            walTask.walStorage.write(walTask.fileName,walTask.keyValueEntry,walTask.isFlush);
+
+            for (int i = 0; i < queue.size(); i++) {
+                WalTask walTask = queue.poll();
+                walTask.walStorage.write(walTask.fileName, walTask.keyValueEntry, walTask.isFlush);
+            }
         }
 
     }

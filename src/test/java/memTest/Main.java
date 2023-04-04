@@ -46,7 +46,7 @@ public class Main {
         keyValue1.setType(KeyValueEntry.Type.insert);
         skipListRep.addKeyValue(keyValue);
 
-        for(int i=20;i>0;i--) {
+        for(int i=1;i>0;i--) {
             Runnable runnable=new Runnable() {
                 @Override
                 public void run() {
@@ -70,17 +70,13 @@ public class Main {
 
         }
 
-        for(int i=20;i>0;i--) {
+        for(int i=1;i>0;i--) {
 
             Runnable runnable=new Runnable() {
                 @Override
                 public void run() {
                     for (int i = 0; i <  1000; i++ ) {
-//                        try {
-//
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
+
                         new KeyValueEntry();
                         Key key = new IntKey(i);
                         Value value = new IntValue(i);
@@ -107,7 +103,7 @@ public class Main {
             Thread thread=new Thread(runnable);
             thread.start();
             list.add(thread);
-
+//
         }
 
 

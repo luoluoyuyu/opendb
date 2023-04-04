@@ -15,10 +15,10 @@ public interface LockManager {
 
 
     SequenceNumber TryLock(long Lid, ColumnFamilyId cId, Key key,boolean exclusive,boolean readOnly
-            , SequenceNumber sequenceNumber);
+            , SequenceNumber sequenceNumber,boolean isTracker);
 
 
-     void UnLock(long Lid, ColumnFamilyId cId, Key key,boolean exclusive,boolean readOnly) ;
+     void UnLock(long Lid, ColumnFamilyId cId, Key key,boolean exclusive,boolean readOnly,boolean isTracker) ;
 
 
     LockTracker.PointLockStatus GetPointLockStatus(ColumnFamilyId cId, Key key);

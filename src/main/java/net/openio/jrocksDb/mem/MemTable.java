@@ -1,5 +1,6 @@
 package net.openio.jrocksDb.mem;
 
+import lombok.Data;
 import net.openio.jrocksDb.db.ColumnFamilyHandle;
 import net.openio.jrocksDb.db.ColumnFamilyId;
 import net.openio.jrocksDb.db.Value;
@@ -9,7 +10,7 @@ import net.openio.jrocksDb.tool.Serializer;
 import net.openio.jrocksDb.transaction.CommitId;
 
 import java.util.List;
-
+@Data
 public class MemTable {
 
     String walFile;
@@ -25,14 +26,18 @@ public class MemTable {
 
 
     public KeyValueEntry get(KeyValueEntry key){
-        if(bloomFilter.get(key.getKey())) return null;
+        if(!bloomFilter.get(key.getKey())) return null;
         return memTableRep.getValue(key);
     }
 
     public void put(KeyValueEntry key){
+
         walLog.write(key,walFile);
+
          memTableRep.addKeyValue(key);
+
          bloomFilter.add(key.key);
+
 
     }
 
@@ -73,6 +78,7 @@ public class MemTable {
         this.needFlush=false;
         this.walLog=walLog;
         walFile=walLog.createWalFile(columnFamilyHandle);
+        columnFamilyHandle.addWalFile(walFile);
         this.memTableRep=memTableRep;
     }
 

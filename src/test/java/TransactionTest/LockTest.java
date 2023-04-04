@@ -14,12 +14,12 @@ public class LockTest {
     public static void main(String[] args) {
 
      int i=0;
-     for( i=0;i<10;i++) {
+     for( i=0;i<1000;i++) {
          Runnable runnable = new Runnable() {
 
              @Override
              public void run() {
-                 testTryLockAndUnlock(a++,1,1,(int) a++);
+                 testTryLockAndUnlock(a++,1,(int) a++,(int) a++);
              }
          };
 
@@ -38,11 +38,11 @@ public class LockTest {
         Key key = new IntKey(k);
         SequenceNumber sequenceNumber = new SequenceNumber(new Date().getTime(),s);
 
-        SequenceNumber tryLockResult = lockManager.TryLock(tid, cId, key, true, false, sequenceNumber);
+        SequenceNumber tryLockResult = lockManager.TryLock(tid, cId, key, true, false, sequenceNumber,true);
         System.out.println(tryLockResult);
 
         System.out.println(lockManager.GetPointLockStatus(cId,key));
 
-        lockManager.UnLock(1, cId, key, true, false);
+        lockManager.UnLock(1, cId, key, true, false,true);
     }
 }

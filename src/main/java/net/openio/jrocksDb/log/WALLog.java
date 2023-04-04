@@ -1,5 +1,6 @@
 package net.openio.jrocksDb.log;
 
+import lombok.Data;
 import net.openio.jrocksDb.config.TransactionConfig;
 import net.openio.jrocksDb.db.ColumnFamilyHandle;
 import net.openio.jrocksDb.db.ColumnFamilyId;
@@ -10,7 +11,7 @@ import net.openio.jrocksDb.mem.SkipListRep;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-
+@Data
 public class WALLog {
 
     ConcurrentLinkedQueue<WalTask> queue;
@@ -18,7 +19,9 @@ public class WALLog {
     WalStorage walStorage;
 
     public boolean write(KeyValueEntry key,String walFile){
+
         return queue.add(new WalTask(walFile,key,false,walStorage));
+
     }
 
     public boolean flush(){

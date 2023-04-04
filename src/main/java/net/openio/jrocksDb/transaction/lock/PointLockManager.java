@@ -35,7 +35,7 @@ public class PointLockManager implements LockManager {
 
     @Override
     public SequenceNumber TryLock(long tId, ColumnFamilyId cId, Key key, boolean exclusive
-            , boolean readOnly, SequenceNumber sequenceNumber) {
+            , boolean readOnly, SequenceNumber sequenceNumber,boolean isTracker) {
         LockMap lm = null;
         synchronized (this) {
             lm = lockMaps.get(cId);
@@ -83,13 +83,16 @@ public class PointLockManager implements LockManager {
 
         lms.add(lockInfo);
 
-        return lockTracker.Track(new LockTracker.PointLockRequest(cId, key, sequenceNumber, readOnly, exclusive));
+        if(isTracker){
+            return lockTracker.Track(new LockTracker.PointLockRequest(cId, key, sequenceNumber, readOnly, exclusive));
+        }
 
+        return lockTracker.GetPointLockStatus(cId,key).seq;
 
     }
 
     @Override
-    public void UnLock(long tId, ColumnFamilyId cId, Key key, boolean exclusive, boolean readOnly) {
+    public void UnLock(long tId, ColumnFamilyId cId, Key key, boolean exclusive, boolean readOnly,boolean isTracker) {
         LockMap lm = lockMaps.get(cId);
         if (lm == null) {
             throw new RuntimeException("LockManager UNLock:LockMap is null");
@@ -120,17 +123,17 @@ public class PointLockManager implements LockManager {
             }
         }
 
-        lockTracker.UnTrack(new LockTracker.PointLockRequest(cId, key, null, readOnly, exclusive));
-
+        if(isTracker) {
+            lockTracker.UnTrack(new LockTracker.
+                    PointLockRequest(cId, key, null, readOnly, exclusive));
+        }
         lock.unlock();
 
         try {
             lms.notifyAll();
         }catch (IllegalMonitorStateException e){
-            e.printStackTrace();
+//            e.printStackTrace();
         }
-
-
 
 
     }

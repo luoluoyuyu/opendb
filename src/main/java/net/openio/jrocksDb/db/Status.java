@@ -7,9 +7,10 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Getter
+
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class Status <K>{
      private boolean success;
 
@@ -23,6 +24,12 @@ public class Status <K>{
      public static Status success(){
           Status status=new Status();
           status.success=true;
+          return status;
+     }
+
+     public static Status f(){
+          Status status=new Status();
+          status.success=false;
           return status;
      }
 
@@ -61,7 +68,7 @@ public class Status <K>{
 
      public static Status<Value> GetDeleteValue(){
           Status<Value> status=new Status<>();
-          status.success=true;
+          status.success=false;
           status.hasValue=false;
           status.date=null;
           return status;

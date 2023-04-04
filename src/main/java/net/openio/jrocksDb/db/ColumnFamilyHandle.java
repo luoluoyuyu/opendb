@@ -2,6 +2,8 @@ package net.openio.jrocksDb.db;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.openio.jrocksDb.compression.CompressionTask;
 import net.openio.jrocksDb.log.WALLog;
@@ -14,12 +16,16 @@ import net.openio.jrocksDb.strorage.FlushTask;
 import net.openio.jrocksDb.strorage.SSTable;
 import net.openio.jrocksDb.tool.Serializer;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-@NoArgsConstructor
+@Data
 public class ColumnFamilyHandle {
+
+    @Getter
+    JRocksDB db;
 
     ColumnFamilyId columnFamilyId;
 
@@ -198,6 +204,7 @@ public class ColumnFamilyHandle {
 
     public ColumnFamilyHandle(ColumnFamilyId columnFamilyId,JRocksDB jRocksDB,String name, ConcurrentLinkedQueue<CompressionTask> compressionQueue, ConcurrentLinkedQueue<WalTask> walQueue,
                               ConcurrentLinkedQueue<FlushTask> flushQueue, List<String> walFiles, FileList fileList, Key.KeyType keyType, Value.ValueType valueType){
+        this.db=jRocksDB;
         this.columnFamilyId=columnFamilyId;
         this.keyType=keyType;
         this.valueType=valueType;
@@ -328,7 +335,9 @@ public class ColumnFamilyHandle {
                     decode_walfile(buf, value_1);
                     break;
                 case keytype_Tag :
+
                     decode_keytype(buf, value_1);
+
                     break;
                 case valuetype_Tag :
                     decode_valuetype(buf, value_1);
@@ -381,6 +390,9 @@ public class ColumnFamilyHandle {
         ColumnFamilyHandle_size += Serializer.computeVarInt32Size(fileList.getByteSize());
         ColumnFamilyHandle_size += fileList.getByteSize();
 
+        ColumnFamilyHandle_size+=name_TagEncodeSize;
+        ColumnFamilyHandle_size += Serializer.computeVarInt32Size(ByteBufUtil.utf8Bytes(name));
+        ColumnFamilyHandle_size += ByteBufUtil.utf8Bytes(name);
 
         ColumnFamilyHandle_size += walfile_TagEncodeSize * WalFiles.size();// add tag length
         for (java.lang.String value_1 : WalFiles) {
@@ -401,6 +413,12 @@ public class ColumnFamilyHandle {
 
 
         return ColumnFamilyHandle_size;
+    }
+
+    public ColumnFamilyHandle(){
+        this.fileList=new FileList();
+
+        this.WalFiles=new ArrayList<>();
     }
 
 

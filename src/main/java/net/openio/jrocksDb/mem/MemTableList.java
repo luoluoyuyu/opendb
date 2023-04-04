@@ -37,7 +37,7 @@ public class MemTableList {
 
     public KeyValueEntry getValue(KeyValueEntry keyValueEntry) {
         KeyValueEntry keyValue = null;
-        keyValue = getUseMemTable().get(keyValueEntry);
+        keyValue = Table.get(keyValueEntry);
         if (keyValue != null) {
             return keyValue;
         }
@@ -52,10 +52,15 @@ public class MemTableList {
     }
 
     public void putValue(KeyValueEntry keyValueEntry) {
+
         getUseMemTable().put(keyValueEntry);
+
         if (immTable.size() > maxImmMemoryTableSize) {
+
             flush();
+
         }
+
     }
 
     private MemTable getUseMemTable() {
@@ -64,11 +69,14 @@ public class MemTableList {
             if (memTable.getKeySize() > keySize || memTable.getSerializerSize() > serializerSize) {
                 immTable.add(memTable);
                 Table = new MemTable(new SkipListRep(TransactionConfig.type == TransactionConfig.TransactionType.readCommit), columnFamilyHandle, walLog);
+                columnFamilyHandle.getDb().loadDB();
             }
 
         }
         return Table;
     }
+
+
 
     private void flush() {
         List<FlushTask> memTableList=new LinkedList<>();
@@ -80,9 +88,14 @@ public class MemTableList {
                     break;
                 }
             }
+            columnFamilyHandle.getDb().loadDB();
 
             for (MemTable memTable : immTable) {
-                memTableList.add(new FlushTask(columnFamilyHandle, memTable));
+                if (memTable.getMaxCommit().compareTo(columnFamilyHandle.getDb().getMinPrepareId()) < 0) {
+                    memTableList.add(new FlushTask(columnFamilyHandle, memTable));
+                }else {
+                    break;
+                }
             }
         }
 
@@ -94,11 +107,12 @@ public class MemTableList {
         this.columnFamilyHandle=columnFamilyHandle;
         this.walLog=walLog;
         immTable = new LinkedList<>();
-        for (String fileName : WalFiles) {
+        for (int i=0;i<WalFiles.size();i++) {
+            String fileName=WalFiles.get(i);
             if(walLog.isFlush(fileName)){
                 continue;
             }
-            MemTable memTable=new MemTable(walLog.readAll(fileName),columnFamilyHandle,walLog);
+            MemTable memTable=new MemTable(fileName,walLog.readAll(fileName),false,walLog);
             if(memTable.getKeySize() > keySize || memTable.getSerializerSize() > serializerSize){
                 immTable.add(memTable);
             }else {

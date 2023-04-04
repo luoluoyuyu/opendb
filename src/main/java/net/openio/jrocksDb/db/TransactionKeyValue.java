@@ -16,6 +16,8 @@ public class TransactionKeyValue {
 
     KeyValueEntry keyValueEntry;
 
+    String name;
+
 
     public final static int columnfamilyid_Num = 1;
     public final static int columnfamilyid_Tag = 10;// the value is num<<<3|wireType

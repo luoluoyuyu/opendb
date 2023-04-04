@@ -14,12 +14,12 @@ public interface Transaction {
 
     Status Rollback();
 
-    Status<Value> Get(Key key, ColumnFamilyHandle columnFamilyHandle);
+    Status<Value> Get(Key key, String ColumnFamilyName);
 
-    Status<Value> GetForUpdate(Key key,Value value,ColumnFamilyHandle columnFamilyHandle);
+    Status<Value> GetForUpdate(Key key,Value value,String ColumnFamilyName);
 
-    Status<Value> Put(Key key, Value value,ColumnFamilyHandle columnFamilyHandle);
+    Status<Value> Put(Key key, Value value,String ColumnFamilyName);
 
-    Status<Value> delete(Key key,ColumnFamilyHandle columnFamilyHandle);
+    Status<Value> delete(Key key,String ColumnFamilyName);
 
 }
