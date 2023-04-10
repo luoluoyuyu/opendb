@@ -2,6 +2,7 @@ package net.openio.jrocksDb.strorage;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
+import net.openio.jrocksDb.db.Key;
 import net.openio.jrocksDb.memArena.MemArena;
 import net.openio.jrocksDb.tool.Serializer;
 
@@ -9,6 +10,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 @Data
 public class IndexBlocks {
 
@@ -22,6 +25,7 @@ public class IndexBlocks {
         buf.writeInt(size-4);
         list.encode(buf);
         fileChannel.write(buf.nioBuffer());
+        buf.release();
         return size;
     }
 
@@ -40,6 +44,22 @@ public class IndexBlocks {
         IndexList list=IndexList.decode(buf,size);
         buf.release();
         return list;
+    }
+
+    //seek is index seek,not meta seek
+    public IndexList getMetaIndexList(FileChannel fileChannel, int IndexSeek, int MetaSeek) throws IOException {
+
+        IndexList indexList=getList(fileChannel,IndexSeek);
+        fileChannel.position(MetaSeek);
+        int lSize=indexList.size();
+        IndexList list=new IndexList();
+        for(int i=0;i<lSize;i++){
+            list.add(getList(fileChannel,indexList.get(i).getOffset()));
+
+        }
+
+        return list;
+
     }
 
     public IndexBlocks(){

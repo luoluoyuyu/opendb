@@ -12,6 +12,19 @@ public class IndexList {
     List<IndexOffset> list;
 
 
+    public void add(IndexList indexList){
+        list.addAll(indexList.list);
+    }
+
+    public void addAll(List<IndexOffset> list){
+        list.addAll(list);
+    }
+
+    public IndexOffset get(int index){
+        return list.get(index);
+    }
+
+
     public IndexList() {
         list = new ArrayList<>();
     }
@@ -72,6 +85,11 @@ public class IndexList {
             OffSetList_size += value_1.getByteSize();
         }
         return OffSetList_size;
+    }
+
+
+    public int size(){
+        return list.size();
     }
 
 

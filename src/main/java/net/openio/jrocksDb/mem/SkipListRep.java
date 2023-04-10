@@ -177,11 +177,15 @@ public class SkipListRep implements MemTableRep {
     public List<KeyValueEntry> getKeyValue(BloomFilter bloomFilter) {
         List<KeyValueEntry> list = new ArrayList<>(keyNum.get());
         Node[] node = head;
-        while (head[0].next != null) {
-            NodeImp nodeImp = (NodeImp) node[0];
+        while (node[0].next != null) {
+
+            NodeImp nodeImp = (NodeImp) node[0].next[0];
+
             list.add((nodeImp.getMax()));
             int size = nodeImp.values.size() - 1;
-            if (size != 0) bloomFilter.delete(nodeImp.key, size);
+
+            if (size > 0) bloomFilter.delete(nodeImp.key, size);
+
             node = node[0].next;
         }
 
@@ -198,7 +202,7 @@ public class SkipListRep implements MemTableRep {
         volatile Node[] next;
 
     }
-
+@Data
     final class NodeImp extends Node {
         Key key;
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();

@@ -27,8 +27,10 @@ public class BloomBlocksTest {
             bloomBlocks.flush(randomAccessFile.getChannel(),0,b);
             int in=0;
             for(int i: bloomBlocks.getBloomFile(randomAccessFile.getChannel(),0)){
-                System.out.println(i);
-                System.out.println(i==b[in++]);
+                
+                if(!(i==b[in++])){
+                    System.out.println(i);
+                }
             }
             randomAccessFile.close();
         } catch (IOException e) {

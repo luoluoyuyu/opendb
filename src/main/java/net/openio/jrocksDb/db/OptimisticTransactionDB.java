@@ -3,6 +3,7 @@ package net.openio.jrocksDb.db;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.openio.jrocksDb.compression.CompressionTask;
+import net.openio.jrocksDb.compression.CompressionWorker;
 import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.log.WalLogWorker;
 import net.openio.jrocksDb.log.WalTask;
@@ -91,7 +92,7 @@ public class OptimisticTransactionDB implements JRocksDB {
 
         snapshotMap.put(snapshot.getNumber(), snapshot);
 
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), KeyValueEntry.Type.insert);
 
         long transactionId = getNewTransactionId();
 
@@ -105,8 +106,6 @@ public class OptimisticTransactionDB implements JRocksDB {
         }
 
         commit(snapshot);
-
-        keyValueEntry.setType(KeyValueEntry.Type.insert);
 
         columnFamilyHandle.put(keyValueEntry);
 
@@ -129,7 +128,7 @@ public class OptimisticTransactionDB implements JRocksDB {
         }
         Snapshot snapshot = new Snapshot();
         snapshotMap.put(snapshot.getNumber(), snapshot);
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, value, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), KeyValueEntry.Type.update);
         long transactionId = getNewTransactionId();
         tryLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
         add(snapshot);
@@ -139,7 +138,7 @@ public class OptimisticTransactionDB implements JRocksDB {
             return Status.NotHasValue();
         }
         commit(snapshot);
-        keyValueEntry.setType(KeyValueEntry.Type.update);
+
         columnFamilyHandle.put(keyValueEntry);
         unLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
         return Status.update(keyValue.getValue());
@@ -157,7 +156,7 @@ public class OptimisticTransactionDB implements JRocksDB {
         }
         Snapshot snapshot = new Snapshot();
         snapshotMap.put(snapshot.getNumber(), snapshot);
-        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), null);
+        KeyValueEntry keyValueEntry = new KeyValueEntry(key, null, snapshot.getCommitId(), snapshot.getNumber(), snapshot.getPrepareId(), KeyValueEntry.Type.delete);
         long transactionId = getNewTransactionId();
         tryLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
         add(snapshot);
@@ -167,7 +166,7 @@ public class OptimisticTransactionDB implements JRocksDB {
             return Status.NotHasValue();
         }
         commit(snapshot);
-        keyValueEntry.setType(KeyValueEntry.Type.delete);
+
         columnFamilyHandle.put(keyValueEntry);
         unLock(transactionId, snapshot.getNumber(), columnFamilyHandle.columnFamilyId, key);
         return Status.Delete(keyValue.getValue());
@@ -208,7 +207,7 @@ public class OptimisticTransactionDB implements JRocksDB {
             if(snapshots.size()>0){
                 minId=snapshots.get(0).getPrepareId();
             }else {
-                minId.setTimes(0l);
+                minId.setTimes(Long.MAX_VALUE);
             }
         }
     }
@@ -323,27 +322,33 @@ public class OptimisticTransactionDB implements JRocksDB {
             optimisticTransactionDB.columnFamilyHandleMap.put(c1.name,c1);
         }
         optimisticTransactionDB.columnFamilyHandles=columnFamilyHandles;
-        Thread thread=new Thread(new WalLogWorker(optimisticTransactionDB.WalQueue));
+        Thread thread=new Thread(new WalLogWorker(optimisticTransactionDB.WalQueue,false));
         thread.start();
-        thread=new Thread(new FlushWorker(optimisticTransactionDB.flushQueue));
-        thread.start();
+        Thread thread2=new Thread(new FlushWorker(optimisticTransactionDB.flushQueue));
+        thread2.start();
+
+        Thread thread3=new Thread(new CompressionWorker(optimisticTransactionDB.compressionQueue));
+        thread3.start();
         return optimisticTransactionDB;
     }
 
 
     public void loadDB(){
-        int size=0;
-        ByteBuf buf= Unpooled.directBuffer((size=this.getByteSize())+4);
-        buf.writeInt(size);
-        this.encode(buf);
-        File file=new File(Config.DBMetaDataPath);
-        try {
-            RandomAccessFile randomAccessFile=new RandomAccessFile(file,"rw");
-            randomAccessFile.seek(0);
-            randomAccessFile.getChannel().write(buf.nioBuffer());
-            randomAccessFile.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (this) {
+            int size = 0;
+            ByteBuf buf = Unpooled.directBuffer((size = this.getByteSize()) + 4);
+            buf.writeInt(size);
+            this.encode(buf);
+            File file = new File(Config.DBMetaDataPath);
+            try {
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                randomAccessFile.seek(0);
+                randomAccessFile.getChannel().write(buf.nioBuffer());
+                buf.release();
+                randomAccessFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

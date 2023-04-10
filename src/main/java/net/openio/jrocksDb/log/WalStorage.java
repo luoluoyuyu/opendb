@@ -55,6 +55,7 @@ public class WalStorage {
                 return false;
             }
             buf.release();
+            return true;
         }
         int offset = 0;
         try {
@@ -94,10 +95,11 @@ public class WalStorage {
                 return false;
             }
             buf.release();
+            return true;
         }
         int offset = 0;
         try {
-            randomAccessFile = new RandomAccessFile(file, "rwd");
+            randomAccessFile = new RandomAccessFile(file, "rw");
             FileChannel fileChannel = randomAccessFile.getChannel();
             offset = readOffset(randomAccessFile);
             randomAccessFile.seek(offset);
@@ -149,6 +151,7 @@ public class WalStorage {
                 data.release();
                 size.clear();
             }
+            size.release();
             rfile.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -158,20 +161,24 @@ public class WalStorage {
     }
 
 
+
+
     public boolean isFlush(String fileName) {
-        File file = new File(fileName);
-        if (!file.exists()) return false;
+        File file = new File(filePath+fileName);
+        if (!file.exists()) return true;
         RandomAccessFile randomAccessFile = null;
         ByteBuf flush = memArena.allocator(flushSize);
         try {
             randomAccessFile = new RandomAccessFile(file, "rw");
             randomAccessFile.seek(flushSeek);
+            flush.writerIndex(flushSize);
             randomAccessFile.getChannel().read(flush.nioBuffer());
             randomAccessFile.close();
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+
         boolean v = flush.readLong() != 0;
         flush.release();
         return v;
@@ -179,7 +186,7 @@ public class WalStorage {
 
 
     public boolean delete(String fileName) {
-        File file = new File(fileName);
+        File file = new File(filePath+fileName);
         if (file.exists()) {
             return file.delete();
         }

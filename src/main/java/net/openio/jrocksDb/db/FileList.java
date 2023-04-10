@@ -7,7 +7,7 @@ import net.openio.jrocksDb.tool.Serializer;
 
 import java.util.ArrayList;
 import java.util.List;
-@Getter
+
 public class FileList {
 
     private List<SSTable> level0;
@@ -32,6 +32,105 @@ public class FileList {
     }
 
 
+    public void setList(List<SSTable> list,int level){
+        synchronized (this) {
+            switch (level) {
+                case 0:
+                    level0 = list;
+                    return;
+                case 1:
+                    level1 = list;
+                    return;
+                case 2:
+                    level2 = list;
+                    return;
+                case 3:
+                    level3 = list;
+                    return;
+                case 4:
+                    level4 = list;
+                    return;
+            }
+        }
+    }
+
+    public void deleteSSTable(int f,int e,int level){
+        synchronized (this){
+            List<SSTable> ssTables=null;
+            switch (level) {
+                case 0:
+                    ssTables=level0;
+                    break;
+                case 1:
+                    ssTables=level1;
+                    break;
+                case 2:
+                    ssTables=level2;
+                    break;
+                case 3:
+                    ssTables=level3;
+                    break;
+                case 4:
+                    ssTables=level4;
+                    break;
+                default: return;
+            }
+
+            for(int i=e-f;i>0;i--) {
+                ssTables.remove(f);
+            }
+        }
+
+    }
+
+    public List<SSTable> getSSTable(int level){
+        synchronized (this){
+            List<SSTable> ssTables=null;
+            switch (level) {
+                case 0:
+                    return List.copyOf(level0);
+                case 1:
+                    return List.copyOf(level1);
+                case 2:
+                    return List.copyOf(level2);
+                case 3:
+                    return List.copyOf(level3);
+                case 4:
+                    return List.copyOf(level4);
+                default: return null;
+            }
+
+        }
+    }
+
+
+    public void getSSTable(SSTable ssTable){
+        synchronized (this){
+            level0.add(ssTable);
+        }
+    }
+
+    public int getLeve0Size(){
+           return level0.size();
+    }
+
+    public int getLeve1Size(){
+        return level0.size();
+    }
+
+    public int getLeve2Size(){
+        return level0.size();
+    }
+
+    public int getLeve3Size(){
+        return level0.size();
+    }
+
+    public int getLeve4Size(){
+        return level0.size();
+    }
+
+
 
     public final static int level0_Num = 1;
     public final static int level0_Tag = 10;// the value is num<<3|wireType
@@ -43,7 +142,7 @@ public class FileList {
 
     private static void decode_level0(ByteBuf buf, FileList a_1) {
         SSTable value_1 = SSTable.decode(buf, Serializer.decodeVarInt32(buf));
-        a_1.getLevel0().add(value_1);
+        a_1.level0.add(value_1);
     }
 
     private void encode_level0(ByteBuf buf) {
@@ -159,70 +258,74 @@ public class FileList {
     }
 
     public void encode(ByteBuf buf) {
-        if (level0!=null&&level0.size()!=0) {
-            this.encode_level0(buf);
-        }
+        synchronized (this) {
+            if (level0 != null && level0.size() != 0) {
+                this.encode_level0(buf);
+            }
 
-        if (level1!=null&&level1.size()!=0) {
-            this.encode_level1(buf);
-        }
+            if (level1 != null && level1.size() != 0) {
+                this.encode_level1(buf);
+            }
 
-        if (level2!=null&&level2.size()!=0) {
-            this.encode_level2(buf);
-        }
+            if (level2 != null && level2.size() != 0) {
+                this.encode_level2(buf);
+            }
 
-        if (level3!=null&&level3.size()!=0) {
-            this.encode_level3(buf);
-        }
+            if (level3 != null && level3.size() != 0) {
+                this.encode_level3(buf);
+            }
 
-        if (level4!=null&&level4.size()!=0) {
-            this.encode_level4(buf);
+            if (level4 != null && level4.size() != 0) {
+                this.encode_level4(buf);
+            }
         }
 
     }
 
     public int getByteSize() {
-        int FileList_size=0;
-        FileList_size += level0_TagEncodeSize * level0.size();// add tag length
-        for (SSTable value_1 : level0) {
-            int length_1 = 0;
-            length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
-            length_1 += value_1.getByteSize();
-            FileList_size += length_1;
+        synchronized (this) {
+            int FileList_size = 0;
+            FileList_size += level0_TagEncodeSize * level0.size();// add tag length
+            for (SSTable value_1 : level0) {
+                int length_1 = 0;
+                length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
+                length_1 += value_1.getByteSize();
+                FileList_size += length_1;
+            }
+
+            FileList_size += level1_TagEncodeSize * level1.size();// add tag length
+            for (SSTable value_1 : level1) {
+                int length_1 = 0;
+                length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
+                length_1 += value_1.getByteSize();
+                FileList_size += length_1;
+            }
+
+            FileList_size += level2_TagEncodeSize * level2.size();// add tag length
+            for (SSTable value_1 : level2) {
+                int length_1 = 0;
+                length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
+                length_1 += value_1.getByteSize();
+                FileList_size += length_1;
+            }
+
+            FileList_size += level3_TagEncodeSize * level3.size();// add tag length
+            for (SSTable value_1 : level3) {
+                int length_1 = 0;
+                length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
+                length_1 += value_1.getByteSize();
+                FileList_size += length_1;
+            }
+
+            FileList_size += level4_TagEncodeSize * level4.size();// add tag length
+            for (SSTable value_1 : level4) {
+                int length_1 = 0;
+                length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
+                length_1 += value_1.getByteSize();
+                FileList_size += length_1;
+            }
+            return FileList_size;
         }
 
-        FileList_size += level1_TagEncodeSize * level1.size();// add tag length
-        for (SSTable value_1 : level1) {
-            int length_1 = 0;
-            length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
-            length_1 += value_1.getByteSize();
-            FileList_size += length_1;
-        }
-
-        FileList_size += level2_TagEncodeSize * level2.size();// add tag length
-        for (SSTable value_1 : level2) {
-            int length_1 = 0;
-            length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
-            length_1 += value_1.getByteSize();
-            FileList_size += length_1;
-        }
-
-        FileList_size += level3_TagEncodeSize * level3.size();// add tag length
-        for (SSTable value_1 : level3) {
-            int length_1 = 0;
-            length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
-            length_1 += value_1.getByteSize();
-            FileList_size += length_1;
-        }
-
-        FileList_size += level4_TagEncodeSize * level4.size();// add tag length
-        for (SSTable value_1 : level4) {
-            int length_1 = 0;
-            length_1 += Serializer.computeVarInt32Size(value_1.getByteSize());
-            length_1 += value_1.getByteSize();
-            FileList_size += length_1;
-        }
-
-        return FileList_size;
     }
 }

@@ -10,6 +10,7 @@ import net.openio.jrocksDb.tool.Serializer;
 import net.openio.jrocksDb.transaction.CommitId;
 
 import java.util.List;
+
 @Data
 public class MemTable {
 
@@ -21,68 +22,75 @@ public class MemTable {
 
     private BloomFilter bloomFilter;
 
-    public volatile boolean  needFlush;
+    public volatile boolean needFlush;
 
 
-
-    public KeyValueEntry get(KeyValueEntry key){
-        if(!bloomFilter.get(key.getKey())) return null;
+    public KeyValueEntry get(KeyValueEntry key) {
+        if (!bloomFilter.get(key.getKey())) return null;
         return memTableRep.getValue(key);
     }
 
-    public void put(KeyValueEntry key){
+    public void put(KeyValueEntry key) {
 
-        walLog.write(key,walFile);
+        walLog.write(key, walFile);
 
-         memTableRep.addKeyValue(key);
+        memTableRep.addKeyValue(key);
 
-         bloomFilter.add(key.key);
+        bloomFilter.add(key.key);
 
 
     }
 
-    public List<KeyValueEntry> getAllKeyValue(){
+    public List<KeyValueEntry> getAllKeyValue() {
         return memTableRep.getKeyValue(bloomFilter);
     }
 
-    public CommitId getMaxCommit(){
+    public CommitId getMaxCommit() {
         return memTableRep.getMaxCommit();
     }
 
-    public void needFlush(){
-        needFlush=true;
+    public void needFlush() {
+        walLog.flush(walFile);
+        needFlush = true;
+
     }
 
-    public boolean getNeedFlush(){
+    public boolean getNeedFlush() {
         return needFlush;
     }
 
-    public int getSerializerSize(){
+    public int getSerializerSize() {
         return memTableRep.getSerializerSize();
     }
 
-    public int getKeySize(){
+    public int getKeySize() {
         return memTableRep.getKeySize();
     }
 
-    public MemTable(String walFile,MemTableRep memTableRep,boolean needFlush,WALLog walLog){
-        bloomFilter=new BloomFilter();
-        this.needFlush=needFlush;
-        this.walFile=walFile;
-        this.memTableRep=memTableRep;
-        this.walLog=walLog;
+    public MemTable(String walFile, MemTableRep memTableRep, boolean needFlush, WALLog walLog, BloomFilter bloomFilter) {
+        this.bloomFilter = bloomFilter;
+        this.needFlush = needFlush;
+        this.walFile = walFile;
+        this.memTableRep = memTableRep;
+        this.walLog = walLog;
     }
 
-    public MemTable(MemTableRep memTableRep, ColumnFamilyHandle columnFamilyHandle,WALLog walLog){
-        bloomFilter=new BloomFilter();
-        this.needFlush=false;
-        this.walLog=walLog;
-        walFile=walLog.createWalFile(columnFamilyHandle);
+    public MemTable(MemTableRep memTableRep, ColumnFamilyHandle columnFamilyHandle, WALLog walLog) {
+        bloomFilter = new BloomFilter();
+        this.needFlush = false;
+        this.walLog = walLog;
+        walFile = walLog.createWalFile(columnFamilyHandle);
         columnFamilyHandle.addWalFile(walFile);
-        this.memTableRep=memTableRep;
+        this.memTableRep = memTableRep;
     }
 
-    public int[] getBloom(){
+    public MemTable(MemTableRep memTableRep, BloomFilter bloomFilter) {
+        this.bloomFilter = bloomFilter;
+        this.needFlush = true;
+        this.memTableRep = memTableRep;
+    }
+
+    public int[] getBloom() {
         return bloomFilter.getData();
     }
 

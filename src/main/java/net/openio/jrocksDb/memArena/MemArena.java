@@ -26,9 +26,9 @@ public class MemArena {
                 0,     // nDirectArena
                 8192,  // pageSize
                 11,    // maxOrder
-                40 * 1024 * 1024,  // tinyCacheSize
-                40 * 1024 * 1024,  // smallCacheSize
-                40 * 1024 * 1024,  // normalCacheSize
+                4 * 1024 * 1024,  // tinyCacheSize
+                4 * 1024 * 1024,  // smallCacheSize
+                4 * 1024 * 1024,  // normalCacheSize
                 false  // useCacheForAllThreads
         );
     }
@@ -53,9 +53,9 @@ public class MemArena {
                     0,     // nDirectArena
                     8192,  // pageSize
                     11,    // maxOrder
-                    40 * 1024 * 1024,  // tinyCacheSize
-                    40 * 1024 * 1024,  // smallCacheSize
-                    40 * 1024 * 1024,  // normalCacheSize
+                    4 * 1024 * 1024,  // tinyCacheSize
+                    4 * 1024 * 1024,  // smallCacheSize
+                    4 * 1024 * 1024,  // normalCacheSize
                     false  // useCacheForAllThreads
             );
         }

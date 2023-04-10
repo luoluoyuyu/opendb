@@ -36,6 +36,7 @@ public class DataBlocks {
         buf.writerIndex(size);
         fileChannel.read(buf.nioBuffer());
         KeyValueEntry keyValueEntry=KeyValueEntry.decode(buf,size);
+        System.out.println(keyValueEntry);
         buf.release();
         list.add(keyValueEntry);
         return size+4;

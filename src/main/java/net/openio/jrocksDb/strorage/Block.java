@@ -1,33 +1,92 @@
 package net.openio.jrocksDb.strorage;
 
-import net.openio.jrocksDb.config.StorageConfig;
+import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.db.ColumnFamilyId;
 import net.openio.jrocksDb.db.Key;
+import net.openio.jrocksDb.mem.BloomFilter;
 import net.openio.jrocksDb.mem.KeyValueEntry;
 import net.openio.jrocksDb.mem.MemTable;
-import net.openio.jrocksDb.memArena.MemArena;
 
-import javax.xml.crypto.dsig.keyinfo.KeyInfo;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class Block {
 
-    private FileHeadBlock fileHeadBlock;
+    private final FileHeadBlock fileHeadBlock;
 
-    private DataBlocks dataBlocks;
+    private final DataBlocks dataBlocks;
 
-    private IndexBlocks indexBlocks;
+    private final IndexBlocks indexBlocks;
 
-    private BloomBlocks bloomBlocks;
+    private final BloomBlocks bloomBlocks;
 
-    private String filePath;
+    private final String filePath;
 
     private final static int dataBlockSize = 512;
+
+    public SSTable flush(List<KeyValueEntry> list, BloomFilter bloomFilter, String fileName) {
+        File file = new File(filePath + fileName);
+        Key minKey = null;
+        Key maxKey = null;
+        int seek = 0;
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            minKey = list.get(0).getKey();
+            maxKey = list.get(list.size() - 1).getKey();
+            List<IndexList> lists = new ArrayList<>();
+            IndexList indexOffsets = new IndexList();
+            seek = FileHeadBlock.FileHeadSize;
+
+            //data
+            fileHeadBlock.setDataOffset(randomAccessFile.getChannel(), seek);
+            int i = 0;
+            for (KeyValueEntry keyValueEntry : list) {
+                indexOffsets.add(new IndexOffset(keyValueEntry.getKey(), seek));
+                seek += dataBlocks.flush(randomAccessFile.getChannel(), seek, keyValueEntry);
+                if (i >= dataBlockSize) {
+                    lists.add(indexOffsets);
+                    indexOffsets = new IndexList();
+                }
+                i++;
+            }
+            if (indexOffsets.getList().size() > 0) {
+                lists.add(indexOffsets);
+            }
+            //bloom
+            fileHeadBlock.setBloomFilterOffset(randomAccessFile.getChannel(), seek);
+            seek += bloomBlocks.flush(randomAccessFile.getChannel(), seek, bloomFilter.getData());
+
+            //meta Index
+
+            fileHeadBlock.setMetaOffset(randomAccessFile.getChannel(), seek);
+            IndexList firstIndexOffer = new IndexList();
+            for (IndexList indexList : lists) {
+                firstIndexOffer.add(new IndexOffset(indexList.getList().get(0).getKey(), seek));
+                seek += indexBlocks.flushFile(randomAccessFile.getChannel(), seek, indexList);
+            }
+
+            //firstIndex
+
+            fileHeadBlock.setIndexOffset(randomAccessFile.getChannel(), seek);
+
+            indexBlocks.flushFile(randomAccessFile.getChannel(), seek, firstIndexOffer);
+
+            randomAccessFile.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        return new SSTable(fileName,minKey,maxKey, seek);
+    }
+
 
     public SSTable flush(MemTable memTable, String fileName) {
         File file = new File(filePath + fileName);
@@ -132,7 +191,7 @@ public class Block {
     }
 
 
-    public List<KeyValueEntry> getAllKeyValue(Key key, String fileName) {
+    public List<KeyValueEntry> getAllKeyValue( String fileName) {
         List<KeyValueEntry> keyValueEntries = new ArrayList<>();
         File file = new File(filePath + fileName);
 
@@ -151,6 +210,48 @@ public class Block {
 
         return keyValueEntries;
     }
+
+    public List<KeyValueEntry> getKeyEntryByIndexOff(String fileName,IndexList indexList){
+        List<KeyValueEntry> keyValueEntries = new ArrayList<>();
+        File file = new File(filePath + fileName);
+
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+
+            for(IndexOffset indexO:indexList.getList()) {
+                System.out.println(indexO);
+                dataBlocks.getKeyValue(randomAccessFile.getChannel(), indexO.getOffset(), keyValueEntries);
+            }
+            randomAccessFile.close();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+            return null;
+        }
+
+        return keyValueEntries;
+    }
+
+
+
+    public IndexList getListAll(SSTable ssTable){
+        File file=new File(filePath+ssTable.getFileName());
+        if(!file.exists()){
+            throw new RuntimeException("file not exist");
+        }
+        IndexList indexList=null;
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            int seek = fileHeadBlock.getMetaOffset(randomAccessFile.getChannel());
+            int indexSeek = fileHeadBlock.getIndexOffset(randomAccessFile.getChannel());
+            indexList=indexBlocks.getMetaIndexList(randomAccessFile.getChannel(),indexSeek,seek);
+            randomAccessFile.close();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+
+        return indexList;
+    }
+
 
 
     private static int binarySearch(List<IndexOffset> arr, Key key) {
@@ -175,7 +276,7 @@ public class Block {
         dataBlocks = new DataBlocks();
         indexBlocks = new IndexBlocks();
         bloomBlocks = new BloomBlocks();
-        filePath = StorageConfig.StoragePath;
+        filePath = Config.StoragePath;
     }
 
 

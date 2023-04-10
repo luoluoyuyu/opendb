@@ -1,9 +1,7 @@
 package net.openio.jrocksDb.db;
 
 import net.openio.jrocksDb.config.Config;
-import net.openio.jrocksDb.config.TransactionConfig;
 import net.openio.jrocksDb.mem.KeyValueEntry;
-import net.openio.jrocksDb.mem.MemTableRep;
 import net.openio.jrocksDb.transaction.SequenceNumber;
 import net.openio.jrocksDb.transaction.Snapshot;
 import net.openio.jrocksDb.transaction.Transaction;
@@ -113,7 +111,7 @@ public class OptimisticTransaction implements Transaction {
             return Status.CValueTypeVerify();
         }
         KeyValueEntry keyValueEntry = null;
-        if (TransactionConfig.TransactionType.readCommit == TransactionConfig.type) {
+        if (Config.TransactionType.readCommit == Config.type) {
             for (TransactionKeyValue keyValue : writeBatch) {
                 if (keyValue.columnFamilyId.equals(columnFamilyHandle.columnFamilyId)) {
                     if (keyValue.keyValueEntry.getKey().compareTo(key) == 0) {
@@ -154,7 +152,7 @@ public class OptimisticTransaction implements Transaction {
             return Status.CValueTypeVerify();
         }
         KeyValueEntry keyValueEntry = null;
-        if (TransactionConfig.TransactionType.readCommit == TransactionConfig.type) {
+        if (Config.TransactionType.readCommit == Config.type) {
             for (TransactionKeyValue keyValue : writeBatch) {
                 if (keyValue.columnFamilyId.equals(columnFamilyHandle.columnFamilyId)) {
                     if (keyValue.keyValueEntry.getKey().compareTo(key) == 0) {
@@ -195,7 +193,7 @@ public class OptimisticTransaction implements Transaction {
         }
 
         KeyValueEntry keyValueEntry = null;
-        if (TransactionConfig.TransactionType.readCommit == TransactionConfig.type) {
+        if (Config.TransactionType.readCommit == Config.type) {
             for (TransactionKeyValue keyValue : writeBatch) {
                 if (keyValue.columnFamilyId.equals(columnFamilyHandle.columnFamilyId)) {
                     if (keyValue.keyValueEntry.getKey().compareTo(key) == 0) {

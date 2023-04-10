@@ -1,16 +1,14 @@
 package net.openio.jrocksDb.log;
 
 import lombok.Data;
-import net.openio.jrocksDb.config.TransactionConfig;
+import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.db.ColumnFamilyHandle;
 import net.openio.jrocksDb.db.ColumnFamilyId;
-import net.openio.jrocksDb.mem.KeyValueEntry;
-import net.openio.jrocksDb.mem.MemTableRep;
-import net.openio.jrocksDb.mem.SkipListRep;
+import net.openio.jrocksDb.mem.*;
 
-import java.util.List;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+
 @Data
 public class WALLog {
 
@@ -20,12 +18,14 @@ public class WALLog {
 
     public boolean write(KeyValueEntry key,String walFile){
 
-        return queue.add(new WalTask(walFile,key,false,walStorage));
+        return queue.add(new WalTask(walFile,key,walStorage));
 
     }
 
-    public boolean flush(){
-        return queue.add(new WalTask(null,null,true,walStorage));
+
+
+    public void flush(String fileName){
+        walStorage.write(fileName,new LinkedList<>(),true);
     }
 
 
@@ -36,21 +36,23 @@ public class WALLog {
     }
 
 
-    public MemTableRep readAll(String fileName){
-        SkipListRep skipListRep=new SkipListRep(TransactionConfig.type==TransactionConfig.TransactionType.readCommit);
+    public MemTable readAll(String fileName){
+        BloomFilter bloomFilter=new BloomFilter();
+        SkipListRep skipListRep=new SkipListRep(Config.type== Config.TransactionType.readCommit);
         for(KeyValueEntry keyValueEntry:walStorage.getAllMemTable(fileName)){
             skipListRep.addKeyValue(keyValueEntry);
+            bloomFilter.add(keyValueEntry.getKey());
         }
-        return skipListRep;
+
+        return new MemTable(fileName,skipListRep,false,this,bloomFilter);
     }
+
+
 
     public boolean isFlush(String fileName){
         return walStorage.isFlush(fileName);
     }
 
-    public boolean createFile(String fileName, ColumnFamilyId columnFamilyId){
-        return walStorage.createFile(fileName,columnFamilyId);
-    }
 
 
     public WALLog(ConcurrentLinkedQueue<WalTask> queue,WalStorage walStorage){

@@ -7,15 +7,15 @@ public class DBTest {
 
         jRocksDB.createColumnFamily("luoluo", Key.KeyType.intKey, Value.ValueType.intValue);
 
-        for(int i=0;i<1000;i++) {
+        for(int i=0;i<1024*1024;i++) {
 
             Status status=jRocksDB.put(new IntKey(i), new IntValue(i), "luoluo");
-            System.out.println(status);
+
 
         }
 
 
-        System.out.println(jRocksDB.get(new IntKey(1),"luoluo"));
+       System.out.println(jRocksDB.get(new IntKey(997),"luoluo"));
 
 
     }

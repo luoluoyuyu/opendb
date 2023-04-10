@@ -57,7 +57,6 @@ public class SSTable {
 
     private void encode_minkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, minkey_Tag);
-        Serializer.encodeVarInt32(buf, this.minKey.getByteSize());
         this.minKey.toByte(buf);
     }
 
@@ -72,7 +71,6 @@ public class SSTable {
 
     private void encode_longminkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, longminkey_Tag);
-        Serializer.encodeVarInt32(buf, this.minKey.getByteSize());
         this.minKey.toByte(buf);
     }
 
@@ -87,7 +85,6 @@ public class SSTable {
 
     private void encode_bytesminkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, bytesminkey_Tag);
-        Serializer.encodeVarInt32(buf, this.minKey.getByteSize());
         this.minKey.toByte(buf);
     }
 
@@ -101,7 +98,6 @@ public class SSTable {
 
     private void encode_maxkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, maxkey_Tag);
-        Serializer.encodeVarInt32(buf, this.maxKey.getByteSize());
         this.maxKey.toByte(buf);
     }
 
@@ -115,7 +111,6 @@ public class SSTable {
 
     private void encode_longmaxkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, longmaxkey_Tag);
-        Serializer.encodeVarInt32(buf, this.maxKey.getByteSize());
         this.maxKey.toByte(buf);
     }
 
@@ -129,7 +124,6 @@ public class SSTable {
 
     private void encode_bytesmaxkey(ByteBuf buf) {
         Serializer.encodeVarInt32(buf, bytesmaxkey_Tag);
-        Serializer.encodeVarInt32(buf, this.maxKey.getByteSize());
         this.maxKey.toByte(buf);
     }
 
@@ -181,7 +175,8 @@ public class SSTable {
             this.encode_filename(buf);
 
 
-        this.encode_size(buf);
+            this.encode_size(buf);
+
 
         if (minKey instanceof IntKey) {
             this.encode_minkey(buf);
@@ -220,38 +215,32 @@ public class SSTable {
 
         if (minKey instanceof IntKey) {
             SSTable_size += minkey_TagEncodeSize;
-
-            SSTable_size += Serializer.computeVarInt32Size(minKey.getByteSize());
             SSTable_size += minKey.getByteSize();
         }
 
         if (minKey instanceof LongKey) {
             SSTable_size += longminkey_TagEncodeSize;
-            SSTable_size += Serializer.computeVarInt32Size(minKey.getByteSize());
             SSTable_size += minKey.getByteSize();
         }
 
         if (minKey instanceof BytesKey) {
             SSTable_size += bytesminkey_TagEncodeSize;
-            SSTable_size+= Serializer.computeVarInt32Size(minKey.getByteSize());
+            SSTable_size += Serializer.computeVarInt32Size(minKey.getByteSize());
             SSTable_size += minKey.getByteSize();
         }
 
         if (maxKey instanceof IntKey) {
             SSTable_size += maxkey_TagEncodeSize;
-            SSTable_size += Serializer.computeVarInt32Size(maxKey.getByteSize());
             SSTable_size += maxKey.getByteSize();
         }
 
         if (maxKey instanceof LongKey) {
             SSTable_size += longmaxkey_TagEncodeSize;
-            SSTable_size += Serializer.computeVarInt32Size(maxKey.getByteSize());
             SSTable_size += maxKey.getByteSize();
         }
 
         if (maxKey instanceof BytesKey) {
             SSTable_size += bytesmaxkey_TagEncodeSize;
-
             SSTable_size += Serializer.computeVarInt32Size(maxKey.getByteSize());
             SSTable_size += maxKey.getByteSize();
         }

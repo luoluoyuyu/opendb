@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBufUtil;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.openio.jrocksDb.compression.CompressionTask;
 import net.openio.jrocksDb.log.WALLog;
 import net.openio.jrocksDb.log.WalStorage;
@@ -25,7 +26,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ColumnFamilyHandle {
 
     @Getter
-    JRocksDB db;
+    private JRocksDB db;
+
 
     ColumnFamilyId columnFamilyId;
 
@@ -49,6 +51,9 @@ public class ColumnFamilyHandle {
 
     Value.ValueType valueType;
 
+    @Setter
+    private boolean compression;
+
 
     public void addWalFile(String fileName){
         synchronized (this) {
@@ -59,19 +64,20 @@ public class ColumnFamilyHandle {
 
     public void addFileLevel(SSTable ssTable){
         synchronized (this) {
-            fileList.getLevel0().add(ssTable);
+            fileList.getSSTable(ssTable);
         }
 
-        if(fileList.getLevel0().size()>4){
+        if(!compression&&fileList.getLeve0Size()>4){
             compressionQueue.add(new CompressionTask(fileList,this));
+            compression=true;
         }
     }
 
     public KeyValueEntry get(KeyValueEntry keyValueEntry){
         KeyValueEntry keyValue=memTableList.getValue(keyValueEntry);
         if(keyValue==null){
-            int length=fileList.getLevel0().size();
-            List<SSTable> list=fileList.getLevel0();
+            int length=fileList.getLeve0Size();
+            List<SSTable> list=fileList.getSSTable(0);
             Key key=keyValueEntry.getKey();
             for (int i=length-1;i>=0;i--){
                 SSTable ssTable=list.get(i);
@@ -85,7 +91,7 @@ public class ColumnFamilyHandle {
                 }
             }
 
-            list=fileList.getLevel1();
+            list=fileList.getSSTable(1);
             length=list.size();
             for (int i=0;i<length;i++){
                 SSTable ssTable=list.get(i);
@@ -100,7 +106,7 @@ public class ColumnFamilyHandle {
                 }
             }
 
-            list=fileList.getLevel2();
+            list=fileList.getSSTable(2);
             length=list.size();
             for (int i=0;i<length;i++){
                 SSTable ssTable=list.get(i);
@@ -115,7 +121,7 @@ public class ColumnFamilyHandle {
                 }
             }
 
-            list=fileList.getLevel3();
+            list=fileList.getSSTable(3);
             length=list.size();
             for (int i=0;i<length;i++){
                 SSTable ssTable=list.get(i);
@@ -130,7 +136,7 @@ public class ColumnFamilyHandle {
                 }
             }
 
-            list=fileList.getLevel4();
+            list=fileList.getSSTable(4);
             length=list.size();
             for (int i=0;i<length;i++){
                 SSTable ssTable=list.get(i);

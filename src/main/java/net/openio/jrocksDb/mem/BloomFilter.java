@@ -16,7 +16,7 @@ public  class BloomFilter {
     private Lock lock;
 
     public BloomFilter(){
-        length=512;
+        length=1024;
         data = new int[length];
         lock=new ReentrantLock();
     }
@@ -27,6 +27,15 @@ public  class BloomFilter {
             throw new RuntimeException("bloomFiler array size mem out ");
         }
         data = new int[this.length];
+        lock=new ReentrantLock();
+    }
+
+    public BloomFilter(int[] bloom){
+        length=bloom.length;
+        if(length<=0){
+            throw new RuntimeException("bloomFiler array size mem out ");
+        }
+        data = bloom;
         lock=new ReentrantLock();
     }
 

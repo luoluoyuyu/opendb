@@ -12,7 +12,6 @@ public class WalTask {
 
     KeyValueEntry keyValueEntry;
 
-    boolean isFlush;
 
     WalStorage walStorage;
 

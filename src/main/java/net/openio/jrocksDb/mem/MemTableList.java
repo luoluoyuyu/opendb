@@ -1,20 +1,15 @@
 package net.openio.jrocksDb.mem;
 
-import net.openio.jrocksDb.config.TransactionConfig;
+import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.db.ColumnFamilyHandle;
-import net.openio.jrocksDb.db.ColumnFamilyId;
-import net.openio.jrocksDb.db.Key;
-import net.openio.jrocksDb.db.Value;
 import net.openio.jrocksDb.log.WALLog;
 import net.openio.jrocksDb.strorage.FlushTask;
-import net.openio.jrocksDb.transaction.Snapshot;
-import net.openio.jrocksDb.transaction.Transaction;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class MemTableList {
 
@@ -29,11 +24,11 @@ public class MemTableList {
 
     ConcurrentLinkedQueue<FlushTask> flushTasks;
 
-    public final static int keySize = 1024 * 1024 * 2;
+    Set<MemTable> memTables;
 
-    public final static int serializerSize = 8 * keySize;
+    public final static int serializerSize =  Config.serializerSize;
 
-    public final static int maxImmMemoryTableSize = 10;
+    public final static int maxImmMemoryTableNum = 1;
 
     public KeyValueEntry getValue(KeyValueEntry keyValueEntry) {
         KeyValueEntry keyValue = null;
@@ -55,7 +50,7 @@ public class MemTableList {
 
         getUseMemTable().put(keyValueEntry);
 
-        if (immTable.size() > maxImmMemoryTableSize) {
+        if (immTable.size() > maxImmMemoryTableNum) {
 
             flush();
 
@@ -66,9 +61,9 @@ public class MemTableList {
     private MemTable getUseMemTable() {
         synchronized (this) {
             MemTable memTable = Table;
-            if (memTable.getKeySize() > keySize || memTable.getSerializerSize() > serializerSize) {
+            if ( memTable.getSerializerSize() > serializerSize) {
                 immTable.add(memTable);
-                Table = new MemTable(new SkipListRep(TransactionConfig.type == TransactionConfig.TransactionType.readCommit), columnFamilyHandle, walLog);
+                Table = new MemTable(new SkipListRep(Config.type == Config.TransactionType.readCommit), columnFamilyHandle, walLog);
                 columnFamilyHandle.getDb().loadDB();
             }
 
@@ -76,30 +71,32 @@ public class MemTableList {
         return Table;
     }
 
+    public void flush(MemTable memTable){
+        memTables.remove(memTable);
+        flush();
+    }
+
 
 
     private void flush() {
-        List<FlushTask> memTableList=new LinkedList<>();
+
         synchronized (this) {
-            while (immTable.size() > 0) {
-                if (immTable.get(0).needFlush) {
-                    immTable.remove(0);
-                } else {
-                    break;
+            for(int i=0;i<immTable.size();i++) {
+                if (immTable.get(i).needFlush) {
+                    immTable.remove(i);
                 }
             }
             columnFamilyHandle.getDb().loadDB();
 
             for (MemTable memTable : immTable) {
-                if (memTable.getMaxCommit().compareTo(columnFamilyHandle.getDb().getMinPrepareId()) < 0) {
-                    memTableList.add(new FlushTask(columnFamilyHandle, memTable));
+                if (memTable.getMaxCommit().compareTo(columnFamilyHandle.getDb().getMinPrepareId()) < 0&&!memTables.contains(memTable)) {
+                    memTables.add(memTable);
+                    flushTasks.add(new FlushTask(columnFamilyHandle, memTable));
                 }else {
                     break;
                 }
             }
         }
-
-        flushTasks.addAll(memTableList);
 
     }
 
@@ -109,11 +106,14 @@ public class MemTableList {
         immTable = new LinkedList<>();
         for (int i=0;i<WalFiles.size();i++) {
             String fileName=WalFiles.get(i);
+
+
             if(walLog.isFlush(fileName)){
                 continue;
             }
-            MemTable memTable=new MemTable(fileName,walLog.readAll(fileName),false,walLog);
-            if(memTable.getKeySize() > keySize || memTable.getSerializerSize() > serializerSize){
+
+            MemTable memTable=walLog.readAll(fileName);
+            if( memTable.getSerializerSize() > serializerSize){
                 immTable.add(memTable);
             }else {
                 Table=memTable;
@@ -121,8 +121,9 @@ public class MemTableList {
         }
 
         if(Table==null){
-            Table =new MemTable(new SkipListRep(TransactionConfig.type == TransactionConfig.TransactionType.readCommit), columnFamilyHandle, walLog);
+            Table =new MemTable(new SkipListRep(Config.type == Config.TransactionType.readCommit), columnFamilyHandle, walLog);
         }
         this.flushTasks=flushTasks;
+        memTables=new HashSet<>();
     }
 }
