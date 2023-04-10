@@ -1,106 +1,0 @@
-
-…
-DB/Db.protogoogle.protobuf"‡
-SSTable
-fileName (	RfileName
-size (Rsize/
-minKey (2.google.protobuf.IntKeyRminKey8
-
-longMinKey (2.google.protobuf.LongKeyR
-longMinKey:
-BytesMinKey (2.google.protobuf.ByteKeyRBytesMinKey/
-maxKey (2.google.protobuf.IntKeyRmaxKey8
-
-longMaxKey (2.google.protobuf.LongKeyR
-longMaxKey:
-BytesMaxKey (2.google.protobuf.ByteKeyRBytesMaxKey"„
-FileList0
-level0 (2.google.protobuf.SSTableRlevel00
-level1 (2.google.protobuf.SSTableRlevel10
-level2 (2.google.protobuf.SSTableRlevel20
-level3 (2.google.protobuf.SSTableRlevel30
-level4 (2.google.protobuf.SSTableRlevel4"˜
-ColumnFamilyHandle/
-id (2.google.protobuf.ColumnFamilyIdRid
-name (	Rname5
-fileList (2.google.protobuf.FileListRfileList
-WalFile (	RWalFile2
-keyType (2.google.protobuf.KeyTypeRkeyType8
-	valueType (2.google.protobuf.ValueTypeR	valueType"k
-DB1
-c (2#.google.protobuf.ColumnFamilyHandleRc2
-columnFamilyHandleId (RcolumnFamilyHandleId".
-log'
-k (2.google.protobuf.KeyValueRk"¢
-KeyValue
-key (Rkey
-intKey (RintKey
-longKey (RlongKey
-value (Rvalue
-intValue (RintValue
-	LongValue (R	LongValue8
-	prepareId (2.google.protobuf.PrepareIdR	prepareId1
-seq (2.google.protobuf.SequenceNumberRseq5
-commitId	 (2.google.protobuf.CommitIdRcommitId2
-type
- (2.google.protobuf.KeyValue.TypeRtype"*
-Type
-
-delete
-
-update
-
-insert"/
-	PrepareId
-time (Rtime
-id (Rid".
-CommitId
-time (Rtime
-id (Rid"4
-SequenceNumber
-time (Rtime
-id (Rid"
-IntKey
-key (Rkey"
-LongKey
-key (Rkey"
-ByteKey
-key (Rkey"ž
-Key/
-intKey (2.google.protobuf.IntKeyRintKey2
-longKey (2.google.protobuf.LongKeyRlongKey2
-byteKey (2.google.protobuf.ByteKeyRbyteKey" 
-IntValue
-value (Rvalue"!
-	LongValue
-value (Rvalue"!
-	ByteValue
-value (Rvalue"²
-Value5
-intValue (2.google.protobuf.IntValueRintValue8
-	longValue (2.google.protobuf.LongValueR	longValue8
-	byteValue (2.google.protobuf.ByteValueR	byteValue"•
-TransactionKeyValueG
-columnFamilyId (2.google.protobuf.ColumnFamilyIdRcolumnFamilyId5
-keyValue (2.google.protobuf.KeyValueRkeyValue" 
-ColumnFamilyId
-id (Rid"d
-Offset
-key (Rkey
-intKey (RintKey
-longKey (RlongKey
-offset (Roffset"9
-
-OffSetList+
-list (2.google.protobuf.OffsetRlist*0
-KeyType
-
-intKey
-longKey
-bytesKey*8
-	ValueType
-intValue
-	longValue
-
-bytesValueB
-com
