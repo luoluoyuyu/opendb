@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.db.ColumnFamilyHandle;
 import net.openio.jrocksDb.db.FileList;
+import net.openio.jrocksDb.db.IntKey;
 import net.openio.jrocksDb.db.Key;
 import net.openio.jrocksDb.mem.*;
 import net.openio.jrocksDb.strorage.Block;
@@ -55,6 +56,7 @@ public class CompressionWorker implements Runnable {
             lists.add(i, block.getListAll(list.get(i)));
         }
         Set<Key> set = new HashSet<>();
+        List<IndexList> da=new ArrayList<>(lists.size());
         for (int i = size - 1; i >= 0; i--) {
             IndexList indexList = lists.get(i);
             IndexList iList = new IndexList();
@@ -64,9 +66,10 @@ public class CompressionWorker implements Runnable {
                     iList.add(offset);
                 }
             }
-            lists.add(i, iList);
-        }
 
+            da.add(0, iList);
+        }
+        lists=da;
         List<KeyValueEntry> keyValueEntries = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
@@ -131,8 +134,9 @@ public class CompressionWorker implements Runnable {
                 while (list.size() > 0) {
                     if (index < keyValueEntries.size()) {
                         KeyValueEntry bKey = list.get(0);
+                        System.out.println(bKey);
                         KeyValueEntry keyValue = keyValueEntries.get(index);
-                        int result = keyValue.getKey().compareTo(bKey);
+                        int result = keyValue.getKey().compareTo(bKey.getKey());
                         if (result > 0) {
                             KeyValueEntry keyValueEntry;
                             memTableRep.add(keyValueEntry = keyValueEntries.get(index++));

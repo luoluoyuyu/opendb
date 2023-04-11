@@ -2,6 +2,7 @@ package net.openio.jrocksDb.strorage;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
+import net.openio.jrocksDb.db.IntKey;
 import net.openio.jrocksDb.mem.KeyValueEntry;
 import net.openio.jrocksDb.memArena.MemArena;
 import net.openio.jrocksDb.tool.Serializer;
@@ -17,16 +18,21 @@ public class DataBlocks {
 
     public int flush(FileChannel fileChannel, int seek, KeyValueEntry keyValue) throws IOException {
         fileChannel.position(seek);
+
         int size=keyValue.getSize();
+
         ByteBuf buf=memArena.allocator(size);
+
         keyValue.encode(buf);
         fileChannel.write(buf.nioBuffer());
         buf.release();
+
         return size;
     }
 
     public int getKeyValue(FileChannel fileChannel, int seek, List<KeyValueEntry> list) throws IOException {
         fileChannel.position(seek);
+
         ByteBuf buf=memArena.allocator(4);
         buf.writerIndex(4);
         fileChannel.read(buf.nioBuffer());
@@ -36,7 +42,6 @@ public class DataBlocks {
         buf.writerIndex(size);
         fileChannel.read(buf.nioBuffer());
         KeyValueEntry keyValueEntry=KeyValueEntry.decode(buf,size);
-        System.out.println(keyValueEntry);
         buf.release();
         list.add(keyValueEntry);
         return size+4;

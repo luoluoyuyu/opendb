@@ -2,6 +2,7 @@ package net.openio.jrocksDb.strorage;
 
 import net.openio.jrocksDb.config.Config;
 import net.openio.jrocksDb.db.ColumnFamilyId;
+import net.openio.jrocksDb.db.IntKey;
 import net.openio.jrocksDb.db.Key;
 import net.openio.jrocksDb.mem.BloomFilter;
 import net.openio.jrocksDb.mem.KeyValueEntry;
@@ -47,11 +48,13 @@ public class Block {
             fileHeadBlock.setDataOffset(randomAccessFile.getChannel(), seek);
             int i = 0;
             for (KeyValueEntry keyValueEntry : list) {
+
                 indexOffsets.add(new IndexOffset(keyValueEntry.getKey(), seek));
                 seek += dataBlocks.flush(randomAccessFile.getChannel(), seek, keyValueEntry);
                 if (i >= dataBlockSize) {
                     lists.add(indexOffsets);
                     indexOffsets = new IndexList();
+                    i=0;
                 }
                 i++;
             }
@@ -106,11 +109,13 @@ public class Block {
             fileHeadBlock.setDataOffset(randomAccessFile.getChannel(), seek);
             int i = 0;
             for (KeyValueEntry keyValueEntry : list) {
+
                 indexOffsets.add(new IndexOffset(keyValueEntry.getKey(), seek));
                 seek += dataBlocks.flush(randomAccessFile.getChannel(), seek, keyValueEntry);
                 if (i >= dataBlockSize) {
                     lists.add(indexOffsets);
                     indexOffsets = new IndexList();
+                    i=0;
                 }
                 i++;
             }
@@ -219,7 +224,6 @@ public class Block {
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
 
             for(IndexOffset indexO:indexList.getList()) {
-                System.out.println(indexO);
                 dataBlocks.getKeyValue(randomAccessFile.getChannel(), indexO.getOffset(), keyValueEntries);
             }
             randomAccessFile.close();

@@ -64,6 +64,7 @@ public class MemTableList {
             if ( memTable.getSerializerSize() > serializerSize) {
                 immTable.add(memTable);
                 Table = new MemTable(new SkipListRep(Config.type == Config.TransactionType.readCommit), columnFamilyHandle, walLog);
+
                 columnFamilyHandle.getDb().loadDB();
             }
 
@@ -83,7 +84,7 @@ public class MemTableList {
         synchronized (this) {
             for(int i=0;i<immTable.size();i++) {
                 if (immTable.get(i).needFlush) {
-                    immTable.remove(i);
+                    memTables.remove(immTable.remove(i));
                 }
             }
             columnFamilyHandle.getDb().loadDB();

@@ -76,8 +76,9 @@ public class ColumnFamilyHandle {
     public KeyValueEntry get(KeyValueEntry keyValueEntry){
         KeyValueEntry keyValue=memTableList.getValue(keyValueEntry);
         if(keyValue==null){
-            int length=fileList.getLeve0Size();
+
             List<SSTable> list=fileList.getSSTable(0);
+            int length=list.size();
             Key key=keyValueEntry.getKey();
             for (int i=length-1;i>=0;i--){
                 SSTable ssTable=list.get(i);
