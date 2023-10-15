@@ -8,6 +8,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="jRocksDB" />
+        <module name="benchmark" />
+        <module name="opendb-core" />
       </profile>
     </annotationProcessing>
   </component>

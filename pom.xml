@@ -1,70 +1,135 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the OpenIO.Net under one or more
+    contributor license agreements. See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License. You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>jRocksDB</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>net.openio.opendb</groupId>
+    <artifactId>opendb</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.0</version>
+    <modules>
+        <module>opendb-core</module>
+        <module>benchmark</module>
+    </modules>
+
+
+    <properties>
+        <junitJupiter.version>5.7.0</junitJupiter.version>
+        <junit-jupiter-params.version>5.2.0</junit-jupiter-params.version>
+        <junit.version>4.13.2</junit.version>
+        <netty.version>4.1.90.Final</netty.version>
+        <license-maven-plugin.version>3.0</license-maven-plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junitJupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit-jupiter-params.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
-
             <plugin>
-                <groupId>net.openio.fastproto</groupId>
-                <artifactId>fastproto_maven_plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
                 <configuration>
-                    <javaOutDir>src/test/java</javaOutDir>
-                    <SourcesDir>src/main/resources</SourcesDir>
-                    <protoFile>
-                        <file>DB/Db.proto</file>
-
-
-                    </protoFile>
-
+                    <header>tools/maven/HEADER.txt</header>
+                    <excludes>
+<!--                        <exclude>**/pom.xml</exclude>-->
+                        <exclude>tools/maven/**</exclude>
+                        <exclude>**/*.desc</exclude>
+                        <exclude>**/*.MD</exclude>
+                        <exclude>**/*.proto</exclude>
+                    </excludes>
+                    <mapping>
+                        <proto>BLOCK_COMMENT_STYLE</proto>
+                    </mapping>
 
                 </configuration>
                 <executions>
                     <execution>
+                        <phase>verify</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.36.2</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <suppressionsLocation>tools/maven/suppressions.xml</suppressionsLocation>
+                    <configLocation>tools/maven/checkstyle.xml</configLocation>
+                    <encoding>UTF-8</encoding>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <linkXRef>false</linkXRef>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>verify-style</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-buffer</artifactId>
-            <version>4.1.80.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec</artifactId>
-            <version>4.1.80.Final</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
-        </dependency>
-
-
-
-
-
-    </dependencies>
 
 </project>
