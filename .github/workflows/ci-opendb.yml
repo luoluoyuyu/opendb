@@ -49,4 +49,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: compile tests
-        run: mvn test
+        run: mvn test -pl !benchmark -am
