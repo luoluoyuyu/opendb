@@ -27,11 +27,13 @@ Based on LSM tree-structured database with up to 100,000 data writes per second.
     columnFamilyDescriptor.setValueType(ValueType.intValue);
     columnFamilyDescriptor.setBlockSize(1<<12);
     openDB.createColumnFamily(columnFamilyDescriptor);
+    columnFamilyHandle=openDB.getColumnFamilyHandle("luoluoyuyu").date;
+
     Key key = new IntKey(1);
     Value value = new IntValue(1);
 
     openDB.put(key, value, columnFamilyHandle);
-    columnFamilyHandle=openDB.getColumnFamilyHandle("luoluoyuyu").date;
+
 ```
 
 ## benchmark
