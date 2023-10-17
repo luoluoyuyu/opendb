@@ -56,7 +56,7 @@ public class OpenDBBenchmark {
 
   @Setup
   public void stepUp(){
-    openDB = OpenDBImp.open(new Options(), "D:/data/git/jDB/opendb-core/src/test/resources/data/");
+    openDB = OpenDBImp.open(new Options(), "opendb-core/src/test/resources/data/");
     ColumnFamilyDescriptor columnFamilyDescriptor = new ColumnFamilyDescriptor();
     columnFamilyDescriptor.setName("luoluoyuyu");
     columnFamilyDescriptor.setKeyType(KeyType.intKey);
