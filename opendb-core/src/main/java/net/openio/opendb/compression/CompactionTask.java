@@ -16,73 +16,83 @@
  */
 package net.openio.opendb.compression;
 
-import net.openio.opendb.model.SequenceNumber;
+import net.openio.opendb.db.ColumnFamily;
+import net.openio.opendb.db.SnapshotManager;
 import net.openio.opendb.storage.metadata.Levels;
 import net.openio.opendb.storage.sstable.SSTable;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class CompactionTask implements Runnable {
 
-  Levels levels;
+  private List<ColumnFamily> list;
 
-  int maxLevel;
+  private int maxLevel;
 
-  SizeTieredCompaction compaction;
+  private SnapshotManager snapshotManager;
 
-  LeveledCompaction leveledCompaction;
+  private int sizeTieredLevel;
 
-  SequenceNumber sequenceNumber;
+  private int ssTableSize;
 
-  int sizeTieredLevel;
-
-  public CompactionTask(Levels levels, int maxLevel, SizeTieredCompaction compaction,
-                        LeveledCompaction leveledCompaction,
-                        SequenceNumber sequenceNumber, int sizeTieredLevel) {
-    this.levels = levels;
+  public CompactionTask(List<ColumnFamily> list, int maxLevel,
+                        SnapshotManager snapshotManager, int sizeTieredLevel, int ssTableSize) {
+    this.list = list;
     this.maxLevel = maxLevel;
-    this.compaction = compaction;
-    this.leveledCompaction = leveledCompaction;
-    this.sequenceNumber = sequenceNumber;
+    this.snapshotManager = snapshotManager;
     this.sizeTieredLevel = sizeTieredLevel;
+    this.ssTableSize = ssTableSize;
   }
 
   @Override
   public void run() {
-    levels.setBeingCompactedLevel(0);
-    if (!levels.getWaitToMerge().isEmpty()) {
-      levels.addList(0, levels.getWaitToMerge());
-      levels.getWaitToMerge().clear();
+    List<ColumnFamily> columnFamilies = null;
+    synchronized (list) {
+      columnFamilies = new LinkedList<>(list);
     }
-    int level = 0;
-    while (level < maxLevel) {
-      if (levels.getLevel(level) == null) {
-        break;
-      }
-      levels.setBeingCompactedLevel(level);
-      if (levels.getAllSize() > levels.getLevel0CompactionTrigger() << level) {
-        if (level < sizeTieredLevel) {
-          try {
-            List<SSTable> list = compaction.compaction(levels.getLevel(level).getSsTables(), sequenceNumber);
-            levels.getLevels().get(level + 1).addSSTables(list);
-          } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("compaction is wrong");
-          }
+    for (ColumnFamily columnFamily : columnFamilies) {
 
-        } else {
-          try {
-            List<SSTable> list = leveledCompaction.compaction(levels.getLevel(level).getSsTables(), sequenceNumber);
-            levels.getLevels().get(level + 1).addSSTables(list);
-          } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("compaction is wrong");
+      Levels levels = columnFamily.getLevels();
+      synchronized (levels) {
+        levels.setBeingCompactedLevel(0);
+      }
+      int level = 0;
+      while (level < maxLevel) {
+        if (levels.getLevel(level) == null) {
+          break;
+        }
+        levels.setBeingCompactedLevel(level);
+        if (levels.getAllSize() > levels.getLevel0CompactionTrigger() << level) {
+          if (level < sizeTieredLevel) {
+            try {
+              SizeTieredCompaction compaction = new SizeTieredCompaction(columnFamily.getBufferCache(),
+                columnFamily.getStorage(), ssTableSize);
+              List<SSTable> list = compaction.compaction(levels.getLevel(level).getSsTables(),
+                snapshotManager.getMinSnapshot());
+              levels.getLevels().get(level + 1).addSSTables(list);
+            } catch (Exception e) {
+              e.printStackTrace();
+              throw new RuntimeException("compaction is wrong");
+            }
+
+          } else {
+            try {
+              LeveledCompaction leveledCompaction = new LeveledCompaction(columnFamily.getBufferCache(),
+                columnFamily.getStorage(), ssTableSize);
+              List<SSTable> list = leveledCompaction.compaction(levels.getLevel(level).getSsTables(),
+                snapshotManager.getMinSnapshot());
+              levels.getLevels().get(level + 1).addSSTables(list);
+            } catch (Exception e) {
+              e.printStackTrace();
+              throw new RuntimeException("compaction is wrong");
+            }
           }
         }
+        level++;
       }
-      level++;
-    }
 
-    levels.setBeingCompactedLevel(-1);
+      levels.setBeingCompactedLevel(-1);
+    }
   }
 }

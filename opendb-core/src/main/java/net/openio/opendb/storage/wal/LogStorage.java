@@ -20,6 +20,7 @@ package net.openio.opendb.storage.wal;
 import net.openio.opendb.log.Log;
 import net.openio.opendb.memarena.MemArena;
 import net.openio.opendb.model.SequenceNumber;
+import net.openio.opendb.tool.FileUtils;
 import net.openio.opendb.tool.IDGenerator;
 import net.openio.opendb.tool.codec.log.LogProtoCodec;
 
@@ -54,8 +55,12 @@ public class LogStorage {
 
   private final LogBodyStorage bodyStorage;
 
-  public int logFileSize(){
+  public int logFileSize() {
     return logFileHead.getLength();
+  }
+
+  public String getFileName() {
+    return fileName;
   }
 
   public boolean addLogs(List<Log> list) throws IOException {
@@ -81,6 +86,21 @@ public class LogStorage {
       close(fileChannel, randomAccessFile);
     }
     return true;
+  }
+
+  public void setFileName(String fileName) throws IOException {
+    this.fileName = fileName;
+    FileChannel fileChannel = null;
+    RandomAccessFile randomAccessFile = null;
+    try {
+      randomAccessFile = getRandomAccessFile(fileDir + fileName);
+      fileChannel = randomAccessFile.getChannel();
+      logFileHead = getFileHead(fileChannel);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      close(fileChannel, randomAccessFile);
+    }
   }
 
   private RandomAccessFile getRandomAccessFile(String fileName) throws FileNotFoundException {
@@ -121,8 +141,7 @@ public class LogStorage {
 
   public String createNewFile() {
     String fileName = IDGenerator.generateUniqueFileName();
-    creatNewFile(fileDir + fileName);
-
+    FileUtils.createFileIfNotExists(fileDir + fileName);
     logFileHead = new LogFileHead();
     this.fileName = fileName;
     logFileHead.setCreateTime(new Date().getTime());
@@ -180,12 +199,10 @@ public class LogStorage {
   }
 
   private boolean createFile(String fileName) {
-    File file = new File(fileDir + fileName);
-
+    File file = new File(fileName);
     if (file.exists()) {
       return false;
     }
-
     try {
       return file.createNewFile();
     } catch (IOException e) {
@@ -262,6 +279,7 @@ public class LogStorage {
     dataStartSeek = walFileHeadSize << 1;
     this.fileDir = fileDir;
     this.pageSize = pageSize;
+    fileName = createNewFile();
   }
 
 

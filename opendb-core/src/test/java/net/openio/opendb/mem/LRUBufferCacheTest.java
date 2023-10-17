@@ -42,7 +42,7 @@ public class LRUBufferCacheTest {
   static {
     for (int i = 0; i < count; i++) {
       KeyValueEntry keyValueEntry = KeyValueGenerator.generateRandomIntKeyValueEntry();
-      memTable.put(keyValueEntry);
+      memTable.put(keyValueEntry,0);
     }
   }
 

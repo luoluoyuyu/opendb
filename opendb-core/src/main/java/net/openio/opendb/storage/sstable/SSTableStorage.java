@@ -26,6 +26,7 @@ import net.openio.opendb.memarena.MemArena;
 import net.openio.opendb.model.key.Key;
 import net.openio.opendb.model.key.KeyType;
 import net.openio.opendb.model.value.ValueType;
+import net.openio.opendb.tool.FileUtils;
 import net.openio.opendb.tool.IDGenerator;
 
 import java.io.File;
@@ -406,31 +407,10 @@ public class SSTableStorage {
       return false;
     }
 
-    try {
-      return file.createNewFile();
-    } catch (IOException e) {
-      e.printStackTrace();
-      return false;
-    }
+    FileUtils.createFileIfNotExists(file.getPath());
+    return true;
   }
 
-
-  private static int binarySearch(List<Key> arr, Key key) {
-    int low = 0;
-    int high = arr.size() - 1;
-    while (low <= high) {
-      int mid = low + (high - low) / 2;
-      Key midVal = arr.get(mid);
-      if (midVal.compareTo(key) < 0) {
-        low = mid + 1;
-      } else if (midVal.compareTo(key) > 0) {
-        high = mid - 1;
-      } else {
-        return mid;
-      }
-    }
-    return low;
-  }
 
 
   public SSTableStorage(int pageSize, int memCacheSize, String fileDir) {

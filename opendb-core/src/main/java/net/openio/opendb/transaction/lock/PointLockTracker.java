@@ -83,19 +83,19 @@ public class PointLockTracker implements LockTracker {
   }
 
   @Override
-  public UntrackStatus unTrack(PointLockRequest pointLockRequest) {
+  public UnTrackStatus unTrack(PointLockRequest pointLockRequest) {
     ConcurrentHashMap<Key, TrackedKeyInfo> a = null;
     Map<Key, TrackedKeyInfo> cMap = trackerKeys.get(pointLockRequest.columnFamilyId);
 
     if (cMap == null) {
-      return UntrackStatus.NOT_TRACKED;
+      return UnTrackStatus.NOT_TRACKED;
 
     }
 
     TrackedKeyInfo trackedKeyInfo = cMap.get(pointLockRequest.key);
 
     if (trackedKeyInfo == null) {
-      return UntrackStatus.NOT_TRACKED;
+      return UnTrackStatus.NOT_TRACKED;
     }
 
     boolean untracked = false;
@@ -117,14 +117,14 @@ public class PointLockTracker implements LockTracker {
         if (cMap.isEmpty()) {
           trackerKeys.remove(pointLockRequest.columnFamilyId);
         }
-        return UntrackStatus.REMOVED;
+        return UnTrackStatus.REMOVED;
       }
     }
     if (untracked) {
-      return UntrackStatus.UNTRACKED;
+      return UnTrackStatus.UNTRACKED;
     }
 
-    return UntrackStatus.NOT_TRACKED;
+    return UnTrackStatus.NOT_TRACKED;
   }
 
   private PointLockTracker() {

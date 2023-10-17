@@ -31,7 +31,10 @@ public class MemArena {
 
 
   public MemArena(int memArenaSize, int pageSize) {
-    allocator = new PooledByteBufAllocator(true, 0, memArenaSize, pageSize, 0);
+    int memArenaSize1 = 2 * 1024 * 1024; // 32MB
+    int pageSize1 = 16 * 1024; // 16KB
+//    allocator = new PooledByteBufAllocator(true, 0, memArenaSize1, pageSize1, 0);
+    allocator = new PooledByteBufAllocator(true);
   }
 
 

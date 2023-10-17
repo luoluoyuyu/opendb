@@ -26,9 +26,9 @@ public class SnapshotManager {
 
   private Snapshot tail = head;
 
-  private AtomicBoolean addState;
+  private AtomicBoolean addState = new AtomicBoolean(false);
 
-  public void addSnapshot(SequenceNumber sequenceNumber) {
+  public Snapshot addSnapshot(SequenceNumber sequenceNumber) {
     Snapshot snapshot = new Snapshot(sequenceNumber);
     while (addState.compareAndSet(false, true)) {
 
@@ -50,6 +50,7 @@ public class SnapshotManager {
     h.next = snapshot;
     snapshot.pre = h;
     addState.set(false);
+    return snapshot;
   }
 
   public void removeSnapshot(Snapshot snapshot) {

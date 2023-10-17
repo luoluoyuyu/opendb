@@ -18,9 +18,11 @@ package net.openio.opendb.mem;
 
 
 import net.openio.opendb.db.KeyValueEntry;
+import net.openio.opendb.model.SequenceNumber;
 import net.openio.opendb.model.key.Key;
 import net.openio.opendb.model.value.Value;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,9 +38,13 @@ public class MemTable {
 
   public final AtomicBoolean canWrite = new AtomicBoolean(true);
 
+  public final AtomicInteger size = new AtomicInteger(0);
+
   public boolean isCanWrite() {
     return canWrite.get();
   }
+
+  public SequenceNumber min = new SequenceNumber(Long.MAX_VALUE);
 
   public boolean flush() {
     if (!canWrite.compareAndSet(true, false)) {
@@ -50,22 +56,21 @@ public class MemTable {
     return true;
   }
 
-  public Value get(Key key) {
+  public Value get(Key key, Comparator<Key> comparator) {
     if (!bloomFilter.get(key)) {
       return null;
     }
-    return memTableRep.getValue(key);
+    return memTableRep.getValue(key, comparator);
   }
 
-  public boolean put(KeyValueEntry key) {
-    if (increaseCount()) {
-      return false;
+  public boolean put(KeyValueEntry key, int size) {
+    this.size.addAndGet(size);
+    if (key.getKey().getSequenceNumber().compareTo(min) < 0) {
+      min = key.getKey().getSequenceNumber();
     }
     memTableRep.addKeyValue(key);
 
     bloomFilter.add(key.getKey());
-
-    declineCount();
 
     return true;
   }
@@ -91,10 +96,10 @@ public class MemTable {
     do {
       count = this.count.get();
       if (count < 0) {
-        return true;
+        return false;
       }
     } while (!this.count.compareAndSet(count, count + 1));
-    return false;
+    return true;
   }
 
 
@@ -119,4 +124,7 @@ public class MemTable {
     return bloomFilter;
   }
 
+  public SequenceNumber getMin() {
+    return min;
+  }
 }

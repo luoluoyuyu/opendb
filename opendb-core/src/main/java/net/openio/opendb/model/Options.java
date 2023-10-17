@@ -18,23 +18,41 @@ package net.openio.opendb.model;
 
 public class Options {
 
-  public int bufferSize = 1 << 20;
-
-  public int logfileSize = 1 << 30;
+  public int allMemTableMaxSize = 1 << 20;
 
   public int storageMemArenaSize = 1 << 25;
 
-  public long lruExpireTime = 300000;
+  public int ssTableSize = 1 << 25;
+
+  public int bufferSize = 1 << 20;
+
+  public boolean asyLog = true;
+
+  public int logfileSize = 1 << 30;
+
+  public int logBlockSize = 1 << 15;
+
+  public int logMemArenaSize = 1 << 20;
+
+  public int walLogHeadSize = 1 << 14;
+
+  public long lruExpireTime = 300000; //ms
 
   public int lruMaxCapacity = 1 << 20;
 
-  public long lruOldBlocksTime = 1000;
+  public long lruOldBlocksTime = 1000; //ms
 
-  public long lruScanTime = 1000;
+  public long lruScanTime = 1000; //ms
 
-  public long compactionTime = 150000;
+  public long compactionTime = 10; //s
 
-  public long level0CompactionSize = 0;
+  public long flushTime = 1; //s
+
+  public long level0CompactionSize = 1 << 28;
+
+  public int sizeTieredLevel = 1;
+
+  public int maxLevel = 8;
 
   public TransactionType transactionType = TransactionType.repeatableRead;
 
@@ -116,6 +134,78 @@ public class Options {
 
   public void setTransactionType(TransactionType transactionType) {
     this.transactionType = transactionType;
+  }
+
+  public int getSizeTieredLevel() {
+    return sizeTieredLevel;
+  }
+
+  public void setSizeTieredLevel(int sizeTieredLevel) {
+    this.sizeTieredLevel = sizeTieredLevel;
+  }
+
+  public int getMaxLevel() {
+    return maxLevel;
+  }
+
+  public void setMaxLevel(int maxLevel) {
+    this.maxLevel = maxLevel;
+  }
+
+  public int getAllMemTableMaxSize() {
+    return allMemTableMaxSize;
+  }
+
+  public void setAllMemTableMaxSize(int allMemTableMaxSize) {
+    this.allMemTableMaxSize = allMemTableMaxSize;
+  }
+
+  public int getSsTableSize() {
+    return ssTableSize;
+  }
+
+  public void setSsTableSize(int ssTableSize) {
+    this.ssTableSize = ssTableSize;
+  }
+
+  public int getLogBlockSize() {
+    return logBlockSize;
+  }
+
+  public void setLogBlockSize(int logBlockSize) {
+    this.logBlockSize = logBlockSize;
+  }
+
+  public int getLogMemArenaSize() {
+    return logMemArenaSize;
+  }
+
+  public void setLogMemArenaSize(int logMemArenaSize) {
+    this.logMemArenaSize = logMemArenaSize;
+  }
+
+  public long getFlushTime() {
+    return flushTime;
+  }
+
+  public void setFlushTime(long flushTime) {
+    this.flushTime = flushTime;
+  }
+
+  public boolean isAsyLog() {
+    return asyLog;
+  }
+
+  public void setAsyLog(boolean asyLog) {
+    this.asyLog = asyLog;
+  }
+
+  public int getWalLogHeadSize() {
+    return walLogHeadSize;
+  }
+
+  public void setWalLogHeadSize(int walLogHeadSize) {
+    this.walLogHeadSize = walLogHeadSize;
   }
 
 

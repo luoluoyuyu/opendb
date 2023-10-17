@@ -40,6 +40,17 @@ public class WalLog implements Log{
 
   private SequenceNumber sequenceNumber;
 
+  public WalLog() {
+  }
+
+  public WalLog(long columnId, Key key, Value value, KeyType keyType, ValueType valueType) {
+    this.columnId = columnId;
+    this.key = key;
+    this.value = value;
+    this.keyType = keyType;
+    this.valueType = valueType;
+  }
+
   @Override
   public int compare(SequenceNumber sequenceNumber) {
     return this.sequenceNumber.compareTo(sequenceNumber);

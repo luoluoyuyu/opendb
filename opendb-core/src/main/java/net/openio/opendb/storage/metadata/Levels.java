@@ -20,6 +20,7 @@ package net.openio.opendb.storage.metadata;
 import net.openio.opendb.storage.sstable.SSTable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Levels {
@@ -66,6 +67,22 @@ public class Levels {
       i += level1.getTotalSize();
     }
     allSize = i;
+  }
+
+  public Levels copy() {
+    Levels copy = new Levels();
+
+    for (Level level : levels) {
+      copy.levels.add(level.copy());
+    }
+    copy.level0CompactionNumTrigger = this.level0CompactionNumTrigger;
+    copy.level0CompactionTrigger = this.level0CompactionTrigger;
+    copy.allSize = this.allSize;
+    copy.beingCompactedLevel = this.beingCompactedLevel;
+
+    copy.waitToMerge = new LinkedList<>(waitToMerge);
+
+    return copy;
   }
 
 

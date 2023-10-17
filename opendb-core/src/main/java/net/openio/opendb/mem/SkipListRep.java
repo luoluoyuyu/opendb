@@ -21,6 +21,7 @@ import net.openio.opendb.db.KeyValueEntry;
 import net.openio.opendb.model.key.Key;
 import net.openio.opendb.model.value.Value;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -57,12 +58,13 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
 
   @Override
   public void addKeyValue(KeyValueEntry keyValue) {
-    Node[] newNode = null;
+
+    Node[] newNode = newNodeArray(randomLevel(), keyValue);
     int addNodeLevel = 0;
-    Node[][] map = new Node[MAX_LEVEL][];
+    Node[][] map = new Node[newNode.length][];
+    Node[] le = head;
     to:
     for (; ; ) {
-      Node[] le = head;
       add(map, head);
       for (int i = MAX_LEVEL - 1; i >= 0; ) {
         if (le[i].next == null) {
@@ -79,23 +81,16 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
         le = le[i].next;
       }
       add(map, le);
-      if (newNode == null) {
-        newNode = newNodeArray(randomLevel(), keyValue);
-      }
       Node[] nodes = newNode;
       int l = nodes.length;
       for (int a = addNodeLevel; a < l; a++, addNodeLevel++) {
-        Node[] node = map[a];
-        Node[] fNext;
-        fNext = nodes[a].next = node[a].next;
-        if (fNext != null && com(((NodeImp) nodes[0]).key, ((NodeImp) fNext[0]).key) >= 0) {
-          newNode = null;
-          l = 0;
-          continue to;
+        Node[] pre = map[a];
+        Node[] next = pre[a].next;
+        if (!NEXT.compareAndSet(pre[a], next, nodes)) {
+          le = pre;
+          break to;
         }
-        if (!NEXT.compareAndSet(node[a], fNext, nodes)) {
-          continue to;
-        }
+        nodes[a].next = next;
       }
       if (addNodeLevel == l) {
         break;
@@ -113,26 +108,26 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
 
 
   private void add(Node[][] nodes, Node[] node) {
-    for (int i = node.length - 1; i >= 0; i--) {
+    for (int i = 0; i < nodes.length && i < node.length; i++) {
       nodes[i] = node;
     }
   }
 
   @Override
-  public Value getValue(Key key) {
+  public Value getValue(Key key, Comparator<Key> comparator) {
     Node[] le = head;
     for (int i = MAX_LEVEL - 1; i >= 0; ) {
       if (le[i].next == null) {
         i--;
         continue;
       }
-      int d = ((NodeImp) le[i].next[0]).key.compareTo(key);
+      int d = comparator.compare(key, ((NodeImp) le[0]).key);
       if (d > 0) {
         i--;
         continue;
       }
       if (d == 0) {
-        return ((NodeImp) le[i].next[0]).get(key).getValue();
+        return ((NodeImp) le[i].next[0]).get().getValue();
       }
       le = le[i].next;
     }
@@ -154,8 +149,16 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
     private Key key;
     private KeyValueEntry values;
 
-    private KeyValueEntry get(Key kv) {
+    private KeyValueEntry get() {
       return values;
+    }
+
+    Key getKey(Node[] node) {
+      return ((NodeImp) node[0]).key;
+    }
+
+    Value getValue(Node[] node) {
+      return ((NodeImp) node[0]).values.getValue();
     }
 
     private NodeImp(final KeyValueEntry kv) {
@@ -218,10 +221,10 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
     }
   }
 
-  private int com(Key key, Key keyValue) {
-    int d = key.compareTo(keyValue);
+  private int com(Key key, Key key1) {
+    int d = key.compareTo(key1);
     if (d == 0) {
-      d = -key.getSequenceNumber().compareTo(keyValue.getSequenceNumber());
+      d = key.getSequenceNumber().compareTo(key1.getSequenceNumber());
     }
     return d;
   }

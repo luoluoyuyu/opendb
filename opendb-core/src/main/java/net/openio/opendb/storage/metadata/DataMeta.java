@@ -24,9 +24,9 @@ import java.util.List;
 
 public class DataMeta {
 
-  private SequenceNumber maxNumber;
+  private SequenceNumber maxNumber = new SequenceNumber(0L);
 
-  private SequenceNumber unPersistedSeqNumberLow;
+  private SequenceNumber unPersistedSeqNumberLow = new SequenceNumber(0L);
 
   private List<ColumnFamily> columnFamilies;
 

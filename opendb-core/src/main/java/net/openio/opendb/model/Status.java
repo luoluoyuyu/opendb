@@ -18,12 +18,34 @@ package net.openio.opendb.model;
 
 
 public class Status<K> {
-  private boolean success;
+  public boolean success;
 
-  private String message;
+  public String message;
 
-  K date;
+  public K date;
 
-  private boolean hasValue;
+  public boolean hasValue;
+
+  public Status(K value) {
+    success = true;
+    if (value == null) {
+      hasValue = false;
+
+    } else {
+      hasValue = true;
+      date = value;
+    }
+  }
+
+  public Status() {
+
+  }
+
+  public static Status fail() {
+    Status status = new Status();
+    status.success = false;
+    status.hasValue = false;
+    return status;
+  }
 
 }

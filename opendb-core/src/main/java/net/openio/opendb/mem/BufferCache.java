@@ -22,17 +22,14 @@ import net.openio.opendb.storage.sstable.MetaBlock;
 
 public class BufferCache {
 
-  private LRUBufferCache<MetaBlock> metaBlocks;
-  private LRUBufferCache<IndexBlock> indexBlocks;
-  private LRUBufferCache<DataBlock> dataBlocks;
+  private final LRUBufferCache<MetaBlock> metaBlocks;
+  private final LRUBufferCache<IndexBlock> indexBlocks;
+  private final LRUBufferCache<DataBlock> dataBlocks;
 
-  public BufferCache(
-    LRUBufferCache<MetaBlock> metaBlocks,
-    LRUBufferCache<IndexBlock> indexBlocks,
-    LRUBufferCache<DataBlock> dataBlocks) {
-    this.metaBlocks = metaBlocks;
-    this.indexBlocks = indexBlocks;
-    this.dataBlocks = dataBlocks;
+  public BufferCache(long expireTime, long scanTime, long oldBlocksTime, int maxCapacity) {
+    this.metaBlocks = new LRUBufferCache<>(expireTime, scanTime, oldBlocksTime, maxCapacity);
+    this.indexBlocks = new LRUBufferCache<>(expireTime, scanTime, oldBlocksTime, maxCapacity);
+    this.dataBlocks = new LRUBufferCache<>(expireTime, scanTime, oldBlocksTime, maxCapacity);
   }
 
 
@@ -77,5 +74,11 @@ public class BufferCache {
 
   public void addDataBlock(DataBlock dataBlock) {
     dataBlocks.add(dataBlock, dataBlock.getSize(), dataBlock.getSsTable().getFileName());
+  }
+
+  public void close(){
+    metaBlocks.close();
+    indexBlocks.close();
+    dataBlocks.close();
   }
 }

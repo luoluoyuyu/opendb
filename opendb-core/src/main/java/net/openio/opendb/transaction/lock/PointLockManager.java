@@ -19,10 +19,9 @@ package net.openio.opendb.transaction.lock;
 import net.openio.opendb.model.SequenceNumber;
 import net.openio.opendb.model.key.Key;
 
-import java.util.Date;
+
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 public class PointLockManager implements LockManager {
 
@@ -47,130 +46,40 @@ public class PointLockManager implements LockManager {
   }
 
 
-  @Override
-  public SequenceNumber tryLock(long tId, Long cId, Key key, boolean exclusive
-    , boolean readOnly, SequenceNumber sequenceNumber, boolean isTracker) {
-    LockMap lm = null;
-    synchronized (this) {
-      lm = lockMaps.get(cId);
-      if (lm == null) {
-        lockMaps.put(cId, lm = new LockMap());
-
-      }
-    }
-    LockMapStripes lms = null;
-    synchronized (lm) {
-      lms = lm.lockMap.get(key);
-      if (lms == null) {
-        lm.lockMap.put(key, lms = new LockMapStripes());
-      }
-    }
-
-    Lock lock = exclusive ? lms.reentrantReadWriteLock.writeLock()
-      : lms.reentrantReadWriteLock.readLock();
-
-    Date date = new Date();
-    waitInfo.put(tId, new CFKey(cId, key));
-    while (!lock.tryLock()) {
-      try {
-        lms.wait(waitTime);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      if (dealLockCheck(tId)) {
-        waitInfo.remove(tId);
-        return null;
-      }
-
-      Date date1 = new Date();
-      if (date1.getTime() <= date.getTime() + tryLockTime) {
-        waitInfo.remove(tId);
-        return null;
-      }
-    }
-    waitInfo.remove(tId);
-
-    useKey.put(new CFKey(cId, key), tId);
-
-
-    LockInfo lockInfo = new LockInfo(tId, exclusive, new Date().getTime() + expirationTime);
-
-    lms.add(lockInfo);
-
-    if (isTracker) {
-      return lockTracker.track(new LockTracker.PointLockRequest(cId, key, sequenceNumber, readOnly, exclusive));
-    }
-
-    return lockTracker.getPointLockStatus(cId, key).seq;
-
-  }
-
-  @Override
-  public void unLock(long lid, Long cId, Key key, boolean exclusive, boolean readOnly, boolean isTracker) {
-    LockMap lm = lockMaps.get(cId);
-    if (lm == null) {
-      throw new RuntimeException("LockManager UNLock:LockMap is null");
-    }
-
-    LockMapStripes lms = lm.lockMap.get(key);
-
-    if (lms == null) {
-      throw new RuntimeException("LockManager UNLock:LockMapStripes is null");
-    }
-
-    Lock lock = exclusive ? lms.reentrantReadWriteLock.writeLock()
-      : lms.reentrantReadWriteLock.readLock();
-
-
-    useKey.remove(new CFKey(cId, key));
-
-    lms.delete(lid);
-    synchronized (lm) {
-      if (lms.num == 0) {
-        lm.lockMap.remove(key);
-      }
-    }
-
-    synchronized (this) {
-      if (lm.lockMap.size() == 0) {
-        lockMaps.remove(cId);
-      }
-    }
-
-    if (isTracker) {
-      lockTracker.unTrack(new LockTracker.
-        PointLockRequest(cId, key, null, readOnly, exclusive));
-    }
-    lock.unlock();
-
-    try {
-      lms.notifyAll();
-    } catch (IllegalMonitorStateException e) {
-//            e.printStackTrace();
-    }
+  public void tryLock(Long cId, Key key, boolean exclusive) {
 
 
   }
 
-  @Override
-  public LockTracker.PointLockStatus getPointLockStatus(Long cId, Key key) {
-    return lockTracker.getPointLockStatus(cId, key);
+  public void tracker(Long cId, Key key, SequenceNumber sequenceNumber) {
+
+
   }
 
-  private boolean dealLockCheck(long id) {
-    long tId = id;
-    CFKey waitKey = waitInfo.get(id);
+  public void unLock(Long cId, Key key) {
 
-    tId = useKey.get(waitKey);
+  }
 
-    while (true) {
-      if ((waitKey = waitInfo.get(tId)) == null) {
-        return false;
-      }
-      if ((tId = useKey.get(waitKey)) == id) {
-        return true;
-      }
-    }
+
+  public SequenceNumber tryLock(long tId, Long cId, Key key, boolean exclusive, boolean readOnly) {
+
+    return new SequenceNumber();
+  }
+
+
+  public void unLock(long tid, Long cId, Key key) {
+
+  }
+
+
+  public void tracker(long tid, Long cId, Key key, SequenceNumber sequenceNumber) {
+    lockTracker.track(new LockTracker.PointLockRequest(cId, key, sequenceNumber, false, false));
+  }
+
+
+  public boolean validate(Long cId, Key key, SequenceNumber sequenceNumber) {
+    LockTracker.PointLockStatus status = lockTracker.getPointLockStatus(cId, key);
+    return status.seq.compareTo(sequenceNumber) <= 0;
   }
 
 

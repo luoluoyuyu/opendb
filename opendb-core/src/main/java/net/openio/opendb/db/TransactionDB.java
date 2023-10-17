@@ -14,39 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.openio.opendb.model.value;
+package net.openio.opendb.db;
 
-import net.openio.opendb.model.key.KeyType;
-
-public class ColumnFamilyHandle {
-  public final String name;
-
-  public final long cId;
-
-  public final KeyType keyType;
-
-  public final ValueType valueType;
-
-  ColumnFamilyHandle(String name, long cId, KeyType keyType, ValueType valueType) {
-    this.name = name;
-    this.cId = cId;
-    this.keyType = keyType;
-    this.valueType = valueType;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public long getColumnFamilyId() {
-    return cId;
-  }
-
-  public KeyType getKeyType() {
-    return keyType;
-  }
-
-  public ValueType getValueType() {
-    return valueType;
-  }
+public class TransactionDB {
 }

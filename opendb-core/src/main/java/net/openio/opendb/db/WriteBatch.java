@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class WriteBatch {
 
+
   private volatile long maxTime;
 
   private final AtomicBoolean storage = new AtomicBoolean();
@@ -36,9 +37,23 @@ public abstract class WriteBatch {
 
   private volatile Node tail = head;
 
-  private final List<Log> logs = new LinkedList<>();
+  LinkedList<Log> logs = new LinkedList<>();
 
   volatile long writeSequenceNumber;
+
+  public WriteBatch(long maxTime) {
+    this.maxTime = maxTime;
+  }
+
+  public abstract List<String> getFile();
+
+  public SequenceNumber getMaxSequenceNumber() {
+    return new SequenceNumber(maxTime);
+  }
+
+  public abstract List<Log> getWal(SequenceNumber sequenceNumber);
+
+  abstract boolean isSyn();
 
 
   public void addLog(WalLog walLog) {
@@ -49,22 +64,36 @@ public abstract class WriteBatch {
     }
     SequenceNumber sequenceNumber = new SequenceNumber(++maxTime);
     walLog.getKey().setSequenceNumber(sequenceNumber);
+    walLog.setSequenceNumber(sequenceNumber);
     tail.next = node;
     node.pre = tail;
     tail = node;
-    logs.add(walLog);
-    int i = logs.size();
+    node.sequenceNumber = sequenceNumber;
+    synchronized (this) {
+      logs.add(walLog);
+    }
     addState.set(false);
-    while (tail.next == null) {
+    while (node.next == null) {
       if (!storage.compareAndSet(false, true)) {
         continue;
       }
-      List<Log> logs = this.logs.subList(0, i);
+      List<Log> logs = new LinkedList<>();
+      if (isSyn()) {
+        synchronized (this) {
+          if (this.logs.size() < 1 << 19 || tail == node) {
+            logs = this.logs;
+            this.logs = new LinkedList<>();
+          } else {
+            storage.set(false);
+            break;
+          }
+        }
+      }
+      step(logs);
       writeSequenceNumber = sequenceNumber.getTimes();
-      step(new LinkedList<>(logs));
       node.pre.next = null;
       head.next = node.next;
-      logs.clear();
+
       storage.set(false);
       return;
     }
@@ -80,6 +109,9 @@ public abstract class WriteBatch {
     volatile Node next;
 
     volatile Node pre;
+
+    SequenceNumber sequenceNumber;
   }
 
+  abstract void close();
 }

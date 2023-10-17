@@ -19,7 +19,6 @@ package net.openio.opendb.db;
 import net.openio.opendb.model.ColumnFamilyDescriptor;
 import net.openio.opendb.model.Status;
 import net.openio.opendb.model.key.Key;
-import net.openio.opendb.model.value.ColumnFamilyHandle;
 import net.openio.opendb.model.value.Value;
 import net.openio.opendb.transaction.Transaction;
 
@@ -37,6 +36,8 @@ public interface OpenDB {
 
   Status<ColumnFamilyHandle> getColumnFamilyHandle(String name);
 
+  Status deleteColumnFamilyHandle(ColumnFamilyHandle columnFamilyHandle);
+
   Status<ColumnFamilyDescriptor> getColumnFamily(String name);
 
   Status<ColumnFamilyDescriptor> createColumnFamily(ColumnFamilyDescriptor columnFamilyDescriptor);
@@ -46,5 +47,7 @@ public interface OpenDB {
   Transaction createTransaction(Snapshot snapshot);
 
   Snapshot getSnapshot();
+
+  void close();
 
 }

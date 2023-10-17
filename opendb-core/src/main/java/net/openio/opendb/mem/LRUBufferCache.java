@@ -269,7 +269,7 @@ public class LRUBufferCache<X extends Block> {
     this.oldBlocksTime = oldBlocksTime;
     if (scanTime > 0) {
       scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-      scheduledExecutorService.schedule(new ScanListTask(), scanTime, TimeUnit.SECONDS);
+      scheduledExecutorService.scheduleAtFixedRate(new ScanListTask(), scanTime, scanTime, TimeUnit.SECONDS);
     } else {
       scheduledExecutorService = null;
     }
@@ -308,5 +308,9 @@ public class LRUBufferCache<X extends Block> {
       oldListSize = size;
       readWriteLock.writeLock().unlock();
     }
+  }
+
+  public void close(){
+    scheduledExecutorService.shutdown();
   }
 }

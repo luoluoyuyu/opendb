@@ -34,6 +34,7 @@ import net.openio.opendb.model.key.StringKey;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.ArrayList;
@@ -88,7 +89,7 @@ public class SKipListRepTest {
     intKeyValueList.sort((a, b) -> {
         int d = a.compareTo(b);
         if (d == 0) {
-          d = -a.getSequenceNumber().compareTo(b.getSequenceNumber());
+          d = a.getSequenceNumber().compareTo(b.getSequenceNumber());
         }
         return d;
 

@@ -27,9 +27,9 @@ public interface LockTracker {
   SequenceNumber track(PointLockRequest pointLockRequest);
 
 
-  PointLockStatus getPointLockStatus(long id, Key key);
+  PointLockStatus getPointLockStatus(long cid, Key key);
 
-  UntrackStatus unTrack(PointLockRequest pointLockRequest);
+  UnTrackStatus unTrack(PointLockRequest pointLockRequest);
 
 
   class PointLockRequest {
@@ -74,7 +74,7 @@ public interface LockTracker {
   }
 
 
-  enum UntrackStatus {
+  enum UnTrackStatus {
 
     NOT_TRACKED,
 

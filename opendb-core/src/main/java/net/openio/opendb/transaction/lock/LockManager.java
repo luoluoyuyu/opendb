@@ -19,20 +19,28 @@ package net.openio.opendb.transaction.lock;
 import net.openio.opendb.model.SequenceNumber;
 import net.openio.opendb.model.key.Key;
 
-public interface LockManager {
+interface LockManager {
 
   // Whether supports locking a specific key.
   boolean isPointLockSupported();
 
 
-  SequenceNumber tryLock(long lid, Long cId, Key key, boolean exclusive, boolean readOnly
-    , SequenceNumber sequenceNumber, boolean isTracker);
+  void tryLock(Long cId, Key key, boolean exclusive);
+
+  void tracker(Long cId, Key key, SequenceNumber sequenceNumber);
+
+  void unLock(Long cId, Key key);
 
 
-  void unLock(long lid, Long cId, Key key, boolean exclusive, boolean readOnly, boolean isTracker);
+  SequenceNumber tryLock(long tId, Long cId, Key key, boolean exclusive, boolean readOnly);
+
+  void unLock(long tid, Long cId, Key key);
 
 
-  LockTracker.PointLockStatus getPointLockStatus(Long cId, Key key);
+  void tracker(long tid, Long cId, Key key, SequenceNumber sequenceNumber);
+
+
+  boolean validate(Long cId, Key key, SequenceNumber sequenceNumber);
 
 
 }

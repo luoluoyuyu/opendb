@@ -85,7 +85,7 @@ public class WalLogsProtoCodec implements LogProtoCodec {
     int length = WAL_LOG_TAG_ENCODE_SIZE * log.size();
     for (Log log1 : log) {
       int l = WalLogProtoCodec.getByteSize((WalLog) log1);
-      length += l + Codec.computeVarInt32Size(l);
+      length += (l + Codec.computeVarInt32Size(l));
     }
     return length;
   }

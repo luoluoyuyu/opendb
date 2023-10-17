@@ -20,6 +20,7 @@ import net.openio.opendb.storage.sstable.SSTable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Level {
@@ -88,6 +89,13 @@ public class Level {
       addSsTables(ssTable);
     }
     ssTables.sort(Comparator.comparing(SSTable::getMinKey));
+  }
 
+  public Level copy() {
+    Level level = new Level();
+    level.level = this.level;
+    level.totalSize = totalSize;
+    level.ssTables = new LinkedList<>(ssTables);
+    return level;
   }
 }

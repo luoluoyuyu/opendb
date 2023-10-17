@@ -14,69 +14,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.openio.opendb.model;
+package net.openio.opendb.db;
 
-import net.openio.opendb.db.ColumnFamily;
+
 import net.openio.opendb.model.key.KeyType;
 import net.openio.opendb.model.value.ValueType;
 
-public class ColumnFamilyDescriptor {
+public class ColumnFamilyHandle {
+  public final String name;
 
-  public String name;
+  public final long cId;
 
-  public KeyType keyType;
+  public final KeyType keyType;
 
-  public ValueType valueType;
+  public final ValueType valueType;
 
-  public int blockSize;
-
-  public ColumnFamilyDescriptor(ColumnFamily columnFamily) {
-    name = columnFamily.getName();
-    keyType = columnFamily.getKeyType();
-    valueType = columnFamily.getValueType();
-    blockSize = columnFamily.getStorageBlockSize();
-  }
-
-
-  public ColumnFamilyDescriptor(String name, KeyType keyType, ValueType valueType, int blockSize) {
+  ColumnFamilyHandle(String name, long cId, KeyType keyType, ValueType valueType) {
     this.name = name;
+    this.cId = cId;
     this.keyType = keyType;
     this.valueType = valueType;
-    this.blockSize = blockSize;
   }
 
-  public ColumnFamilyDescriptor() {
+  ColumnFamilyHandle(ColumnFamily columnFamily) {
+    this.name = columnFamily.getName();
+    this.cId = columnFamily.getColumnFamilyId();
+    this.keyType = columnFamily.getKeyType();
+    this.valueType = columnFamily.getValueType();
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public long getColumnFamilyId() {
+    return cId;
   }
 
   public KeyType getKeyType() {
     return keyType;
   }
 
-  public void setKeyType(KeyType keyType) {
-    this.keyType = keyType;
-  }
-
   public ValueType getValueType() {
     return valueType;
-  }
-
-  public void setValueType(ValueType valueType) {
-    this.valueType = valueType;
-  }
-
-  public int getBlockSize() {
-    return blockSize;
-  }
-
-  public void setBlockSize(int blockSize) {
-    this.blockSize = blockSize;
   }
 }
