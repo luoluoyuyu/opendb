@@ -1,40 +1,42 @@
-/**
- * Licensed to the OpenIO.Net under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.openio.opendb.model;
 
 public class Options {
 
-  public int bufferSize = 1 << 20;
-
-  public int logfileSize = 1 << 30;
+  public int allMemTableMaxSize = 1 << 20;
 
   public int storageMemArenaSize = 1 << 25;
 
-  public long lruExpireTime = 300000;
+  public int ssTableSize = 1 << 25;
+
+  public int bufferSize = 1 << 20;
+
+  public boolean asyLog = true;
+
+  public int logfileSize = 1 << 30;
+
+  public int logBlockSize = 1 << 15;
+
+  public int logMemArenaSize = 1 << 20;
+
+  public int walLogHeadSize = 1 << 14;
+
+  public long lruExpireTime = 300000; //ms
 
   public int lruMaxCapacity = 1 << 20;
 
-  public long lruOldBlocksTime = 1000;
+  public long lruOldBlocksTime = 1000; //ms
 
-  public long lruScanTime = 1000;
+  public long lruScanTime = 1000; //ms
 
-  public long compactionTime = 150000;
+  public long compactionTime = 10; //s
 
-  public long level0CompactionSize = 0;
+  public long flushTime = 1; //s
+
+  public long level0CompactionSize = 1 << 28;
+
+  public int sizeTieredLevel = 1;
+
+  public int maxLevel = 8;
 
   public TransactionType transactionType = TransactionType.repeatableRead;
 
@@ -116,6 +118,78 @@ public class Options {
 
   public void setTransactionType(TransactionType transactionType) {
     this.transactionType = transactionType;
+  }
+
+  public int getSizeTieredLevel() {
+    return sizeTieredLevel;
+  }
+
+  public void setSizeTieredLevel(int sizeTieredLevel) {
+    this.sizeTieredLevel = sizeTieredLevel;
+  }
+
+  public int getMaxLevel() {
+    return maxLevel;
+  }
+
+  public void setMaxLevel(int maxLevel) {
+    this.maxLevel = maxLevel;
+  }
+
+  public int getAllMemTableMaxSize() {
+    return allMemTableMaxSize;
+  }
+
+  public void setAllMemTableMaxSize(int allMemTableMaxSize) {
+    this.allMemTableMaxSize = allMemTableMaxSize;
+  }
+
+  public int getSsTableSize() {
+    return ssTableSize;
+  }
+
+  public void setSsTableSize(int ssTableSize) {
+    this.ssTableSize = ssTableSize;
+  }
+
+  public int getLogBlockSize() {
+    return logBlockSize;
+  }
+
+  public void setLogBlockSize(int logBlockSize) {
+    this.logBlockSize = logBlockSize;
+  }
+
+  public int getLogMemArenaSize() {
+    return logMemArenaSize;
+  }
+
+  public void setLogMemArenaSize(int logMemArenaSize) {
+    this.logMemArenaSize = logMemArenaSize;
+  }
+
+  public long getFlushTime() {
+    return flushTime;
+  }
+
+  public void setFlushTime(long flushTime) {
+    this.flushTime = flushTime;
+  }
+
+  public boolean isAsyLog() {
+    return asyLog;
+  }
+
+  public void setAsyLog(boolean asyLog) {
+    this.asyLog = asyLog;
+  }
+
+  public int getWalLogHeadSize() {
+    return walLogHeadSize;
+  }
+
+  public void setWalLogHeadSize(int walLogHeadSize) {
+    this.walLogHeadSize = walLogHeadSize;
   }
 
 

@@ -1,19 +1,3 @@
-/**
- * Licensed to the OpenIO.Net under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.openio.opendb.transaction.lock;
 
 import net.openio.opendb.model.SequenceNumber;
@@ -83,19 +67,19 @@ public class PointLockTracker implements LockTracker {
   }
 
   @Override
-  public UntrackStatus unTrack(PointLockRequest pointLockRequest) {
+  public UnTrackStatus unTrack(PointLockRequest pointLockRequest) {
     ConcurrentHashMap<Key, TrackedKeyInfo> a = null;
     Map<Key, TrackedKeyInfo> cMap = trackerKeys.get(pointLockRequest.columnFamilyId);
 
     if (cMap == null) {
-      return UntrackStatus.NOT_TRACKED;
+      return UnTrackStatus.NOT_TRACKED;
 
     }
 
     TrackedKeyInfo trackedKeyInfo = cMap.get(pointLockRequest.key);
 
     if (trackedKeyInfo == null) {
-      return UntrackStatus.NOT_TRACKED;
+      return UnTrackStatus.NOT_TRACKED;
     }
 
     boolean untracked = false;
@@ -117,14 +101,14 @@ public class PointLockTracker implements LockTracker {
         if (cMap.isEmpty()) {
           trackerKeys.remove(pointLockRequest.columnFamilyId);
         }
-        return UntrackStatus.REMOVED;
+        return UnTrackStatus.REMOVED;
       }
     }
     if (untracked) {
-      return UntrackStatus.UNTRACKED;
+      return UnTrackStatus.UNTRACKED;
     }
 
-    return UntrackStatus.NOT_TRACKED;
+    return UnTrackStatus.NOT_TRACKED;
   }
 
   private PointLockTracker() {

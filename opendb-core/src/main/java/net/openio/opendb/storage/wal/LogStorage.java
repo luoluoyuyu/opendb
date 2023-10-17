@@ -1,25 +1,10 @@
-/**
- * Licensed to the OpenIO.Net under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.openio.opendb.storage.wal;
 
 
 import net.openio.opendb.log.Log;
 import net.openio.opendb.memarena.MemArena;
 import net.openio.opendb.model.SequenceNumber;
+import net.openio.opendb.tool.FileUtils;
 import net.openio.opendb.tool.IDGenerator;
 import net.openio.opendb.tool.codec.log.LogProtoCodec;
 
@@ -54,8 +39,12 @@ public class LogStorage {
 
   private final LogBodyStorage bodyStorage;
 
-  public int logFileSize(){
+  public int logFileSize() {
     return logFileHead.getLength();
+  }
+
+  public String getFileName() {
+    return fileName;
   }
 
   public boolean addLogs(List<Log> list) throws IOException {
@@ -81,6 +70,21 @@ public class LogStorage {
       close(fileChannel, randomAccessFile);
     }
     return true;
+  }
+
+  public void setFileName(String fileName) throws IOException {
+    this.fileName = fileName;
+    FileChannel fileChannel = null;
+    RandomAccessFile randomAccessFile = null;
+    try {
+      randomAccessFile = getRandomAccessFile(fileDir + fileName);
+      fileChannel = randomAccessFile.getChannel();
+      logFileHead = getFileHead(fileChannel);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      close(fileChannel, randomAccessFile);
+    }
   }
 
   private RandomAccessFile getRandomAccessFile(String fileName) throws FileNotFoundException {
@@ -121,8 +125,7 @@ public class LogStorage {
 
   public String createNewFile() {
     String fileName = IDGenerator.generateUniqueFileName();
-    creatNewFile(fileDir + fileName);
-
+    FileUtils.createFileIfNotExists(fileDir + fileName);
     logFileHead = new LogFileHead();
     this.fileName = fileName;
     logFileHead.setCreateTime(new Date().getTime());
@@ -180,12 +183,10 @@ public class LogStorage {
   }
 
   private boolean createFile(String fileName) {
-    File file = new File(fileDir + fileName);
-
+    File file = new File(fileName);
     if (file.exists()) {
       return false;
     }
-
     try {
       return file.createNewFile();
     } catch (IOException e) {
@@ -262,6 +263,7 @@ public class LogStorage {
     dataStartSeek = walFileHeadSize << 1;
     this.fileDir = fileDir;
     this.pageSize = pageSize;
+    fileName = createNewFile();
   }
 
 

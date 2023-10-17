@@ -1,0 +1,77 @@
+package net.openio.opendb;
+
+import net.openio.opendb.db.ColumnFamilyHandle;
+import net.openio.opendb.db.OpenDB;
+import net.openio.opendb.db.OpenDBImp;
+import net.openio.opendb.mem.KeyValueGenerator;
+import net.openio.opendb.model.ColumnFamilyDescriptor;
+import net.openio.opendb.model.Options;
+import net.openio.opendb.model.key.Key;
+import net.openio.opendb.model.key.KeyType;
+import net.openio.opendb.model.value.Value;
+import net.openio.opendb.model.value.ValueType;
+import org.junit.jupiter.api.Test;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class OpenDBTest {
+
+//  static OpenDB openDB;
+//  static ColumnFamilyHandle columnFamilyHandle;
+//  static List<Key> keys=new LinkedList<>();
+//
+//  static final int THREAD_POOL_SIZE = 25;
+//  static final int TASK_COUNT = 1;
+//  static final  ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+//
+//  static {
+//    openDB = OpenDBImp.open(new Options(),"src/test/resources/data/");
+//    ColumnFamilyDescriptor columnFamilyDescriptor= new ColumnFamilyDescriptor();
+//    columnFamilyDescriptor.setName("luoluoyuyu");
+//    columnFamilyDescriptor.setKeyType(KeyType.intKey);
+//    columnFamilyDescriptor.setValueType(ValueType.intValue);
+//    columnFamilyDescriptor.setBlockSize(1<<12);
+//    openDB.createColumnFamily(columnFamilyDescriptor);
+//
+//
+//    columnFamilyHandle=openDB.getColumnFamilyHandle("luoluoyuyu").date;
+//
+//  }
+//
+//  @Test
+//  public void test(){
+//
+//
+//    for (int i = 0; i < TASK_COUNT; i++) {
+//      executorService.execute(new OpenDBTestTask());
+//    }
+//
+//    executorService.shutdown();
+//    while (!executorService.isTerminated()) {
+//
+//    }
+//
+//
+//    openDB.close();
+//
+//  }
+//
+//  class OpenDBTestTask implements Runnable {
+//    @Override
+//    public void run() {
+//
+//
+//      for (int i = 0; i < 100000; i++) {
+//        Key key = KeyValueGenerator.generateRandomIntKey();
+//        Value value = KeyValueGenerator.generateRandomIntValue();
+//
+//        openDB.put(key, value, columnFamilyHandle);
+//
+//      }
+//
+//    }
+//  }
+}

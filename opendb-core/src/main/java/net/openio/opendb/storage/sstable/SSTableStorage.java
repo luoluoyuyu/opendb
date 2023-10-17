@@ -1,19 +1,3 @@
-/**
- * Licensed to the OpenIO.Net under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.openio.opendb.storage.sstable;
 
 
@@ -26,6 +10,7 @@ import net.openio.opendb.memarena.MemArena;
 import net.openio.opendb.model.key.Key;
 import net.openio.opendb.model.key.KeyType;
 import net.openio.opendb.model.value.ValueType;
+import net.openio.opendb.tool.FileUtils;
 import net.openio.opendb.tool.IDGenerator;
 
 import java.io.File;
@@ -406,31 +391,10 @@ public class SSTableStorage {
       return false;
     }
 
-    try {
-      return file.createNewFile();
-    } catch (IOException e) {
-      e.printStackTrace();
-      return false;
-    }
+    FileUtils.createFileIfNotExists(file.getPath());
+    return true;
   }
 
-
-  private static int binarySearch(List<Key> arr, Key key) {
-    int low = 0;
-    int high = arr.size() - 1;
-    while (low <= high) {
-      int mid = low + (high - low) / 2;
-      Key midVal = arr.get(mid);
-      if (midVal.compareTo(key) < 0) {
-        low = mid + 1;
-      } else if (midVal.compareTo(key) > 0) {
-        high = mid - 1;
-      } else {
-        return mid;
-      }
-    }
-    return low;
-  }
 
 
   public SSTableStorage(int pageSize, int memCacheSize, String fileDir) {
