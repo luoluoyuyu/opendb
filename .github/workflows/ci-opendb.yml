@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-name: CI - FastProto
+name: CI - OpenDB
 on:
   pull_request:
     branches:
@@ -49,4 +49,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: compile tests
-        run: mvn test
+        run: mvn test -pl !benchmark -am

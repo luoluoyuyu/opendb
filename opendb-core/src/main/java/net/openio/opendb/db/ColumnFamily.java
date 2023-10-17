@@ -76,6 +76,7 @@ public class ColumnFamily {
     for (MemTable memTable : memTables) {
       Value value = memTable.get(key, comparator);
       if (value != null) {
+        readWriteLock.readLock().unlock();
         return value;
       }
     }
@@ -142,10 +143,10 @@ public class ColumnFamily {
 
   public void add(Key key, Value value) {
     KeyValueEntry keyValueEntry = new KeyValueEntry(key, value);
-    readWriteLock.readLock().lock();
     int s = keyType.getByteSize(key) + valueType.getByteSize(value);
     size.addAndGet(s);
     while (true) {
+      readWriteLock.readLock().lock();
       for (MemTable memTable : memTables) {
 
         if (!memTable.isCanWrite()) {
@@ -162,6 +163,7 @@ public class ColumnFamily {
         readWriteLock.readLock().unlock();
         return;
       }
+      readWriteLock.readLock().unlock();
       addMemTable();
     }
 
@@ -171,7 +173,7 @@ public class ColumnFamily {
   public ColumnFamily() {
     memTables = new ArrayList<>(8);
     immMemTable = new ArrayList<>(8);
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < 1; i++) {
       memTables.add(new MemTable(new SkipListRep(), new BloomFilter()));
     }
     levels = new Levels();

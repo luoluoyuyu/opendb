@@ -77,10 +77,6 @@ public class MemTable {
 
   public boolean put(List<KeyValueEntry> key) {
 
-    if (increaseCount()) {
-      return false;
-    }
-
     memTableRep.addKeyValue(key);
 
     bloomFilter.add(key);

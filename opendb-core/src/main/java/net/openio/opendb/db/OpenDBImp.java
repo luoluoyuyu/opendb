@@ -101,7 +101,7 @@ public class OpenDBImp implements OpenDB {
       openDBImp.comparator = (a, b) -> {
         int d = a.compareTo(b);
         if (d == 0) {
-          d = a.getSequenceNumber().compareTo(b.getSequenceNumber());
+          d = a.getSequenceNumber().compareTo(b.getSequenceNumber()) >= 0 ? 0 : 1;
         }
         return d;
       };
@@ -118,6 +118,8 @@ public class OpenDBImp implements OpenDB {
   public Status<Value> get(Key key, ColumnFamilyHandle columnFamilyHandle) {
     SequenceNumber sequenceNumber = writeBatch.getMaxSequenceNumber();
     Snapshot snapshot = snapshotManager.addSnapshot(sequenceNumber);
+    key = key.copy();
+    key.setSequenceNumber(sequenceNumber);
     Status<Value> status = new Status<>(columnFamilyManager.get(columnFamilyHandle.getColumnFamilyId(), key, comparator));
     snapshotManager.removeSnapshot(snapshot);
     return status;
@@ -128,6 +130,7 @@ public class OpenDBImp implements OpenDB {
     value.setType(OperationType.insert);
     key = key.copy();
     value = value.copy();
+
     writeBatch.addLog(new WalLog(columnFamilyHandle.getColumnFamilyId(), key, value, columnFamilyHandle.keyType,
       columnFamilyHandle.valueType));
     columnFamilyManager.add(key, value, columnFamilyHandle.getColumnFamilyId());
@@ -136,31 +139,21 @@ public class OpenDBImp implements OpenDB {
 
   @Override
   public Status<Value> update(Key key, Value value, ColumnFamilyHandle columnFamilyHandle) {
-    SequenceNumber sequenceNumber = writeBatch.getMaxSequenceNumber();
-    Snapshot snapshot = snapshotManager.addSnapshot(sequenceNumber);
-    Value value1 = columnFamilyManager.get(columnFamilyHandle.getColumnFamilyId(), key, comparator);
-    snapshotManager.removeSnapshot(snapshot);
-    if (value1 == null) {
-      return Status.fail();
-    }
     key = key.copy();
+    value = value.copy();
     value.setType(OperationType.update);
+    writeBatch.addLog(new WalLog(columnFamilyHandle.getColumnFamilyId(), key, value, columnFamilyHandle.keyType,
+      columnFamilyHandle.valueType));
     columnFamilyManager.add(key, value, columnFamilyHandle.getColumnFamilyId());
-    return new Status<>(value1);
+    return new Status<>();
   }
 
   @Override
-  public Status<Value> delete(Key key, ColumnFamilyHandle columnFamilyHandle) {
-    SequenceNumber sequenceNumber = writeBatch.getMaxSequenceNumber();
-    Snapshot snapshot = snapshotManager.addSnapshot(sequenceNumber);
-    Value value = columnFamilyManager.get(columnFamilyHandle.getColumnFamilyId(), key, comparator);
-    snapshotManager.removeSnapshot(snapshot);
-    if (value == null) {
-      Status.fail();
-    }
+  public Status<Value> delete(Key key, Value value, ColumnFamilyHandle columnFamilyHandle) {
     key = key.copy();
     Value v = value.copy();
-    v.setType(OperationType.delete);
+    writeBatch.addLog(new WalLog(columnFamilyHandle.getColumnFamilyId(), key, value, columnFamilyHandle.keyType,
+      columnFamilyHandle.valueType));
     columnFamilyManager.add(key, value, columnFamilyHandle.getColumnFamilyId());
     return new Status<>(value);
   }

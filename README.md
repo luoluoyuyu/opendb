@@ -19,3 +19,9 @@ Based on LSM tree-structured database with up to 100,000 data writes per second.
     openDB.put(key, value, columnFamilyHandle);
     columnFamilyHandle=openDB.getColumnFamilyHandle("luoluoyuyu").date;
 ```
+
+benchmark
+```
+Benchmark                     Mode  Cnt       Score   Error  Units
+OpenDBBenchmark.addKeyValue  thrpt       134061.544          ops/s
+```

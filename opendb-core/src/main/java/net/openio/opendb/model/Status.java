@@ -38,7 +38,7 @@ public class Status<K> {
   }
 
   public Status() {
-
+    success = true;
   }
 
   public static Status fail() {

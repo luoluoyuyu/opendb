@@ -34,7 +34,7 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
 
   private static final int MAX_LEVEL = 32;
 
-  private volatile Node[] head;
+  private final Node[] head;
 
   private static final double P = 0.75;
 
@@ -71,7 +71,7 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
           i--;
           continue;
         }
-        Key key = ((NodeImp) le[i].next[0]).key;
+        Key key = getNodeImp(le[i].next).key;
         int d = com(key, keyValue.getKey());
         if (d > 0) {
           i--;
@@ -115,19 +115,20 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
 
   @Override
   public Value getValue(Key key, Comparator<Key> comparator) {
+
     Node[] le = head;
     for (int i = MAX_LEVEL - 1; i >= 0; ) {
       if (le[i].next == null) {
         i--;
         continue;
       }
-      int d = comparator.compare(key, ((NodeImp) le[0]).key);
-      if (d > 0) {
+      int d = comparator.compare(key, getNodeImp(le[i].next).key);
+      if (d < 0) {
         i--;
         continue;
       }
       if (d == 0) {
-        return ((NodeImp) le[i].next[0]).get().getValue();
+        return getNodeImp(le[i].next).getValue();
       }
       le = le[i].next;
     }
@@ -144,6 +145,11 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
     volatile Node[] next;
   }
 
+  private NodeImp getNodeImp(Node[] node){
+    return (NodeImp) node[0];
+
+  }
+
 
   static final class NodeImp extends Node {
     private Key key;
@@ -157,8 +163,8 @@ public class SkipListRep<K extends Key, V extends Value> implements MemTableRep 
       return ((NodeImp) node[0]).key;
     }
 
-    Value getValue(Node[] node) {
-      return ((NodeImp) node[0]).values.getValue();
+    Value getValue() {
+      return (this).values.getValue();
     }
 
     private NodeImp(final KeyValueEntry kv) {

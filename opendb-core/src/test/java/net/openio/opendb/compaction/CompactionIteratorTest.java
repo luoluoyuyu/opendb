@@ -48,11 +48,11 @@ public class CompactionIteratorTest {
 //    for (int i = 0; i < count; i++) {
 //      KeyValueEntry keyValueEntry = KeyValueGenerator.generateRandomIntKeyValueEntry();
 //      keyValue.add(keyValueEntry);
-//      memTable.put(keyValueEntry);
+//      memTable.put(keyValueEntry,0);
 //
 //      KeyValueEntry keyValueEntry1 = KeyValueGenerator.generateRandomIntKeyValueEntry();
 //      keyValue.add(keyValueEntry1);
-//      mem.put(keyValueEntry1);
+//      mem.put(keyValueEntry1,0);
 //    }
 //
 //  }
@@ -76,11 +76,9 @@ public class CompactionIteratorTest {
 //    ssTables.add(ssTable);
 //
 //    CompactionIterator compactionIterator = new CompactionIterator(ssTables, storage, new BufferCache(
-//      new LRUBufferCache<>(1000, 60, 60000, 1 << 19),
-//      new LRUBufferCache<>(1000, 60, 60000, 1 << 19),
-//      new LRUBufferCache<>(1000, 60, 60000, 1 << 19)
-//    ),
-//      new SequenceNumber(0L));
+//      1000, 60, 60000, 1 << 1)
+//    ,
+//    new SequenceNumber(0L));
 //    for (KeyValueEntry keyValueEntry : keyValue) {
 //      Assertions.assertEquals(keyValueEntry.getKey().getKey(), compactionIterator.next().getKey().getKey());
 //    }
