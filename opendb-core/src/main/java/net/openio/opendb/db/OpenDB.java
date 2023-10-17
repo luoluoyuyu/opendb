@@ -32,7 +32,7 @@ public interface OpenDB {
 
   Status<Value> update(Key key, Value value, ColumnFamilyHandle columnFamilyHandle);
 
-  Status<Value> delete(Key key, ColumnFamilyHandle columnFamilyHandle);
+  Status<Value> delete(Key key, Value value, ColumnFamilyHandle columnFamilyHandle);
 
   Status<ColumnFamilyHandle> getColumnFamilyHandle(String name);
 

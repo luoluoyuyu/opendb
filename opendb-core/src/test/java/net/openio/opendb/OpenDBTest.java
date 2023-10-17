@@ -22,24 +22,28 @@ import net.openio.opendb.db.OpenDBImp;
 import net.openio.opendb.mem.KeyValueGenerator;
 import net.openio.opendb.model.ColumnFamilyDescriptor;
 import net.openio.opendb.model.Options;
+import net.openio.opendb.model.Status;
 import net.openio.opendb.model.key.Key;
 import net.openio.opendb.model.key.KeyType;
 import net.openio.opendb.model.value.Value;
 import net.openio.opendb.model.value.ValueType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class OpenDBTest {
-
+//
 //  static OpenDB openDB;
 //  static ColumnFamilyHandle columnFamilyHandle;
-//  static List<Key> keys=new LinkedList<>();
+//  static List<Key> list =new LinkedList<>();
 //
-//  static final int THREAD_POOL_SIZE = 25;
+//  static final int THREAD_POOL_SIZE = 1;
 //  static final int TASK_COUNT = 1;
 //  static final  ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 //
@@ -83,11 +87,16 @@ public class OpenDBTest {
 //      for (int i = 0; i < 100000; i++) {
 //        Key key = KeyValueGenerator.generateRandomIntKey();
 //        Value value = KeyValueGenerator.generateRandomIntValue();
-//
+//        list.add(key);
 //        openDB.put(key, value, columnFamilyHandle);
 //
 //      }
 //
+//      for (Key key: list){
+//        Status status=openDB.get(key,columnFamilyHandle);
+//        System.out.println(status.date);
+//        Assertions.assertTrue(status.date!=null);
+//      }
 //    }
 //  }
 }

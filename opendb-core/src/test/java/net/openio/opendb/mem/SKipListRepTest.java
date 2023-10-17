@@ -31,6 +31,7 @@ import net.openio.opendb.model.key.BytesKey;
 import net.openio.opendb.model.key.DoubleKey;
 import net.openio.opendb.model.key.FloatKey;
 import net.openio.opendb.model.key.StringKey;
+import net.openio.opendb.model.value.Value;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
@@ -106,12 +107,23 @@ public class SKipListRepTest {
 
   private void addAndAssertKeyValueEntry(SkipListRep skipListRep, KeyValueEntry keyValueEntry) {
     skipListRep.addKeyValue(keyValueEntry);
+    Value value=skipListRep.getValue(keyValueEntry.getKey(), new Comparator<Key>() {
+      @Override
+      public int compare(Key a, Key b) {
+        int d = a.compareTo(b);
+//        if (d == 0) {
+//          d = a.getSequenceNumber().compareTo(b.getSequenceNumber())>=0?0:1;
+//        }
+        return d;
+      }
+    });
+    Assertions.assertEquals(value.getValue(),keyValueEntry.getValue().getValue());
   }
 
 
   @RepeatedTest(1024)
   public void testIntKeyValueEntry() {
-    KeyValueEntry keyValueEntry = KeyValueGenerator.generateRandomBytesKeyValueEntry();
+    KeyValueEntry keyValueEntry = KeyValueGenerator.generateRandomIntKeyValueEntry();
     addAndAssertKeyValueEntry(intSkipListRep, keyValueEntry);
     synchronized (intKeyValueList) {
       intKeyValueList.add(keyValueEntry.getKey());
