@@ -24,6 +24,4 @@ benchmark
 ```
 Benchmark                     Mode  Cnt       Score   Error  Units
 OpenDBBenchmark.addKeyValue  thrpt       134061.544          ops/s
-OpenDBBenchmark.getKeyValue  thrpt       512352.366          ops/s
-
 ```
